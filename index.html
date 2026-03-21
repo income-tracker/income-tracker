@@ -4,367 +4,576 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>💰 Income Tracker</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Income Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <style>
-        * {
+        *, *::before, *::after {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            padding-bottom: 100px;
+        :root {
+            --bg:       linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            --ink:      #0f172a;
+            --ink-2:    #475569;
+            --ink-3:    #94a3b8;
+            --border:   #e2e8f0;
+            --border-2: #cbd5e1;
+            --card:     #ffffff;
+            --red:      #ef4444;
+            --radius:   14px;
+            --shadow:   0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
+            --shadow-lg:0 4px 6px rgba(0,0,0,.05), 0 16px 48px rgba(0,0,0,.1);
         }
 
-        /* ── Lock Screen ── */
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: var(--ink);
+        }
+
+        /* ─── Lock Screen ─────────────────────────────────────────── */
         #lockScreen {
             position: fixed;
             inset: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg);
+            background-attachment: fixed;
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            padding: 30px;
+            padding: 24px;
         }
 
         #lockScreen.hidden { display: none; }
 
         .lock-card {
-            background: white;
-            border-radius: 28px;
-            padding: 36px 28px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px 32px 32px;
             width: 100%;
             max-width: 360px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: var(--shadow-lg);
             text-align: center;
         }
 
+        .lock-wordmark {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--ink-3);
+            margin-bottom: 32px;
+        }
+
         .lock-icon {
-            font-size: 52px;
-            margin-bottom: 12px;
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: var(--ink);
+            color: white;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
         }
 
         .lock-title {
-            font-size: 22px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 20px;
             font-weight: 700;
-            color: #333;
+            color: var(--ink);
             margin-bottom: 6px;
         }
 
         .lock-subtitle {
             font-size: 14px;
-            color: #888;
+            color: var(--ink-2);
             margin-bottom: 28px;
+            line-height: 1.5;
         }
 
         .lock-input {
             width: 100%;
-            padding: 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 14px;
-            font-size: 18px;
+            padding: 13px 16px;
+            border: 1.5px solid var(--border-2);
+            border-radius: var(--radius);
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
             text-align: center;
-            letter-spacing: 4px;
-            margin-bottom: 16px;
-            transition: border-color 0.3s;
+            letter-spacing: 6px;
+            color: var(--ink);
+            background: #f8fafc;
+            margin-bottom: 12px;
+            transition: border-color .2s, box-shadow .2s;
         }
 
         .lock-input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--ink);
+            box-shadow: 0 0 0 3px rgba(15,23,42,.08);
+            background: white;
         }
 
         .lock-btn {
             width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 14px;
+            background: var(--ink);
             color: white;
             border: none;
-            border-radius: 14px;
-            font-size: 17px;
-            font-weight: 700;
+            border-radius: var(--radius);
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
             cursor: pointer;
-            margin-bottom: 12px;
+            transition: opacity .15s;
+            margin-bottom: 10px;
         }
+
+        .lock-btn:active { opacity: .8; }
 
         .lock-error {
-            color: #ff4757;
-            font-size: 14px;
-            min-height: 20px;
-            margin-top: 4px;
+            color: var(--red);
+            font-size: 13px;
+            min-height: 18px;
         }
 
-        /* ── App ── */
+        /* ─── App shell ───────────────────────────────────────────── */
         #app { display: none; }
         #app.visible { display: block; }
 
-        .container {
-            max-width: 500px;
+        /* ─── Top nav ─────────────────────────────────────────────── */
+        .topnav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(248,250,252,.8);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .topnav-brand {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--ink);
+        }
+
+        .topnav-lock {
+            background: none;
+            border: 1.5px solid var(--border-2);
+            border-radius: 8px;
+            padding: 7px 14px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--ink-2);
+            cursor: pointer;
+            transition: border-color .15s, color .15s;
+        }
+
+        .topnav-lock:hover {
+            border-color: var(--ink);
+            color: var(--ink);
+        }
+
+        /* ─── Page content ────────────────────────────────────────── */
+        .page {
+            max-width: 520px;
             margin: 0 auto;
+            padding: 28px 20px 80px;
         }
 
-        .header {
-            text-align: center;
+        /* ─── Total banner ────────────────────────────────────────── */
+        .total-banner {
+            background: var(--ink);
+            border-radius: 18px;
+            padding: 28px 28px 24px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .total-banner::before {
+            content: '';
+            position: absolute;
+            top: -40px; right: -40px;
+            width: 160px; height: 160px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.04);
+        }
+
+        .total-label {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,.5);
+            margin-bottom: 8px;
+        }
+
+        .total-amount {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 44px;
+            font-weight: 700;
             color: white;
-            margin-bottom: 30px;
+            line-height: 1;
         }
 
-        .header h1 {
+        /* ─── Cards ───────────────────────────────────────────────── */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .card-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--ink-3);
+            margin-bottom: 20px;
+        }
+
+        /* ─── Form ────────────────────────────────────────────────── */
+        .form-group { margin-bottom: 16px; }
+        .form-group:last-child { margin-bottom: 0; }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink-2);
+            margin-bottom: 7px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid var(--border-2);
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            color: var(--ink);
+            background: #f8fafc;
+            transition: border-color .2s, box-shadow .2s, background .2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--ink);
+            box-shadow: 0 0 0 3px rgba(15,23,42,.07);
+            background: white;
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 72px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: var(--ink);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity .15s;
+            margin-top: 4px;
+        }
+
+        .btn-primary:active { opacity: .8; }
+
+        /* ─── Export button ───────────────────────────────────────── */
+        .btn-outline {
+            width: 100%;
+            padding: 13px;
+            background: transparent;
+            color: var(--ink-2);
+            border: 1.5px solid var(--border-2);
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: border-color .15s, color .15s;
+            margin-bottom: 20px;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--ink);
+            color: var(--ink);
+        }
+
+        /* ─── Entry cards ─────────────────────────────────────────── */
+        .entry-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .entry-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .entry-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+
+        .entry-job {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--ink);
+            flex: 1;
+            line-height: 1.4;
+        }
+
+        .entry-amount {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--ink);
+            white-space: nowrap;
+        }
+
+        .entry-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .entry-date {
+            font-size: 12px;
+            color: var(--ink-3);
+            font-weight: 400;
+        }
+
+        .entry-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-sm {
+            padding: 5px 12px;
+            border-radius: 7px;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1.5px solid var(--border-2);
+            background: transparent;
+            color: var(--ink-2);
+            transition: border-color .15s, color .15s;
+        }
+
+        .btn-sm:hover { border-color: var(--ink); color: var(--ink); }
+
+        .btn-sm-danger {
+            border-color: #fecaca;
+            color: var(--red);
+            background: #fff5f5;
+        }
+
+        .btn-sm-danger:hover { border-color: var(--red); background: #fee2e2; }
+
+        /* ─── Entry edit mode ─────────────────────────────────────── */
+        .entry-edit { display: flex; flex-direction: column; gap: 10px; }
+
+        .entry-edit-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .entry-edit-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 2px;
+        }
+
+        .btn-save {
+            flex: 1;
+            padding: 10px;
+            background: var(--ink);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-cancel {
+            padding: 10px 16px;
+            background: transparent;
+            color: var(--ink-2);
+            border: 1.5px solid var(--border-2);
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        /* ─── Empty state ─────────────────────────────────────────── */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--ink-3);
+            font-size: 14px;
+        }
+
+        .empty-state-icon {
             font-size: 32px;
             margin-bottom: 10px;
         }
 
-        .lock-app-btn {
-            position: fixed;
-            top: 18px;
-            right: 18px;
-            background: rgba(255,255,255,0.25);
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255,255,255,0.6);
-            color: white;
-            border-radius: 12px;
-            padding: 8px 14px;
-            font-size: 15px;
-            cursor: pointer;
-            z-index: 100;
-        }
-
-        .total {
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            border-radius: 20px;
-            color: white;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .total-label {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-bottom: 5px;
-        }
-
-        .total-amount {
-            font-size: 48px;
-            font-weight: bold;
-        }
-
-        .input-card {
-            background: white;
-            border-radius: 25px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group:last-child { margin-bottom: 0; }
-
-        label {
-            display: block;
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        input, textarea {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 60px;
-            font-family: inherit;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .btn:active { transform: scale(0.98); }
-
-        .entries { margin-top: 20px; }
-
-        .entry-card {
-            background: white;
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        .entry-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .entry-date { color: #999; font-size: 14px; }
-
-        .entry-amount {
-            font-size: 24px;
-            font-weight: bold;
-            color: #667eea;
-        }
-
-        .entry-job { color: #333; font-size: 16px; margin-bottom: 10px; }
-
-        .entry-delete {
-            background: #ff4757;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
+        /* ─── Section label ───────────────────────────────────────── */
+        .section-label {
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 12px;
-            cursor: pointer;
-        }
-
-        .export-btn {
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
-            color: white;
-            border: 2px solid white;
-            padding: 15px;
-            border-radius: 12px;
-            width: 100%;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: white;
-            opacity: 0.7;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--ink-3);
+            margin-bottom: 12px;
         }
     </style>
 </head>
 <body>
 
-    <!-- Lock Screen -->
+    <!-- ── Lock Screen ────────────────────────────────────────────── -->
     <div id="lockScreen">
         <div class="lock-card">
+            <div class="lock-wordmark">Income Tracker</div>
             <div class="lock-icon" id="lockIcon">🔐</div>
             <div class="lock-title" id="lockTitle">Welcome back</div>
-            <div class="lock-subtitle" id="lockSubtitle">Enter your password to unlock</div>
+            <div class="lock-subtitle" id="lockSubtitle">Enter your password to continue</div>
             <input type="password" id="lockInput" class="lock-input" placeholder="••••••••" autocomplete="current-password">
             <button class="lock-btn" id="lockActionBtn" onclick="handleLockAction()">Unlock</button>
             <div class="lock-error" id="lockError"></div>
         </div>
     </div>
 
-    <!-- App -->
+    <!-- ── App ────────────────────────────────────────────────────── -->
     <div id="app">
-        <button class="lock-app-btn" onclick="lockApp()">🔒 Lock</button>
-        <div class="container">
-            <div class="header">
-                <h1>💰 Income Tracker</h1>
-            </div>
+        <nav class="topnav">
+            <span class="topnav-brand">Income Tracker</span>
+            <button class="topnav-lock" onclick="lockApp()">Lock</button>
+        </nav>
 
-            <div class="total">
+        <div class="page">
+
+            <!-- Total -->
+            <div class="total-banner">
                 <div class="total-label">Total Income</div>
-                <div class="total-amount" id="totalAmount">€0</div>
+                <div class="total-amount" id="totalAmount">€0.00</div>
             </div>
 
-            <div class="input-card">
+            <!-- Add entry -->
+            <div class="card">
+                <div class="card-title">New Entry</div>
                 <form id="incomeForm">
                     <div class="form-group">
-                        <label>Date</label>
-                        <input type="date" id="dateInput" required>
+                        <label class="form-label">Date</label>
+                        <input type="date" id="dateInput" class="form-input" required>
                     </div>
                     <div class="form-group">
-                        <label>Amount (EUR)</label>
-                        <input type="number" id="amountInput" placeholder="0.00" step="0.01" required>
+                        <label class="form-label">Amount (EUR)</label>
+                        <input type="number" id="amountInput" class="form-input" placeholder="0.00" step="0.01" min="0" required>
                     </div>
                     <div class="form-group">
-                        <label>Job / Source</label>
-                        <textarea id="jobInput" placeholder="e.g., Casino blog article" required></textarea>
+                        <label class="form-label">Job / Source</label>
+                        <textarea id="jobInput" class="form-input" placeholder="e.g., Casino blog article" required></textarea>
                     </div>
-                    <button type="submit" class="btn">Add Income Entry</button>
+                    <button type="submit" class="btn-primary">Add Entry</button>
                 </form>
             </div>
 
-            <button class="export-btn" onclick="exportToCSV()">📊 Export to CSV</button>
+            <!-- Export -->
+            <button class="btn-outline" onclick="exportToCSV()">Export to CSV</button>
 
-            <div class="entries" id="entriesList"></div>
+            <!-- Entries -->
+            <div class="section-label">Entries</div>
+            <div class="entry-list" id="entriesList"></div>
+
         </div>
     </div>
 
     <script>
-        // ── Password helpers (SHA-256 via Web Crypto) ──────────────────────
+        // ── SHA-256 helper ───────────────────────────────────────────
         async function sha256(text) {
-            const buf = await crypto.subtle.digest('SHA-256',
-                new TextEncoder().encode(text));
-            return Array.from(new Uint8Array(buf))
-                .map(b => b.toString(16).padStart(2, '0')).join('');
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // ── Lock screen logic ───────────────────────────────────────────────
-        const isFirstTime = !localStorage.getItem('pwHash');
+        // ── Lock screen ──────────────────────────────────────────────
+        let _firstTime = !localStorage.getItem('pwHash');
 
-        if (isFirstTime) {
-            document.getElementById('lockIcon').textContent    = '🔑';
-            document.getElementById('lockTitle').textContent   = 'Set a password';
-            document.getElementById('lockSubtitle').textContent = 'Choose a password to protect your income data';
-            document.getElementById('lockActionBtn').textContent = 'Set Password';
-            document.getElementById('lockInput').placeholder   = 'Choose a password';
+        function initLockUI() {
+            if (_firstTime) {
+                document.getElementById('lockIcon').textContent = '🔑';
+                document.getElementById('lockTitle').textContent = 'Create a password';
+                document.getElementById('lockSubtitle').textContent = 'Choose a password to protect your income data';
+                document.getElementById('lockActionBtn').textContent = 'Set Password';
+                document.getElementById('lockInput').placeholder = 'Choose a password';
+            }
         }
 
-        // Allow Enter key on password input
+        initLockUI();
+
         document.getElementById('lockInput').addEventListener('keydown', e => {
             if (e.key === 'Enter') handleLockAction();
         });
 
         async function handleLockAction() {
-            const val = document.getElementById('lockInput').value.trim();
+            const val = document.getElementById('lockInput').value;
             const errEl = document.getElementById('lockError');
             errEl.textContent = '';
 
             if (!val) { errEl.textContent = 'Please enter a password.'; return; }
 
-            if (isFirstTime) {
-                if (val.length < 4) { errEl.textContent = 'Password must be at least 4 characters.'; return; }
+            if (_firstTime) {
+                if (val.length < 4) { errEl.textContent = 'Use at least 4 characters.'; return; }
                 localStorage.setItem('pwHash', await sha256(val));
+                _firstTime = false;
                 unlockApp();
             } else {
-                const hash = await sha256(val);
-                if (hash === localStorage.getItem('pwHash')) {
+                if (await sha256(val) === localStorage.getItem('pwHash')) {
                     unlockApp();
                 } else {
-                    errEl.textContent = 'Incorrect password. Try again.';
+                    errEl.textContent = 'Incorrect password.';
                     document.getElementById('lockInput').value = '';
                     document.getElementById('lockInput').focus();
                 }
@@ -374,8 +583,8 @@
         function unlockApp() {
             document.getElementById('lockScreen').classList.add('hidden');
             document.getElementById('app').classList.add('visible');
-            renderEntries();
             document.getElementById('dateInput').valueAsDate = new Date();
+            renderEntries();
         }
 
         function lockApp() {
@@ -383,16 +592,13 @@
             document.getElementById('lockScreen').classList.remove('hidden');
             document.getElementById('lockInput').value = '';
             document.getElementById('lockError').textContent = '';
-            // Restore normal unlock UI if not first time
-            if (!isFirstTime) {
-                document.getElementById('lockIcon').textContent    = '🔐';
-                document.getElementById('lockTitle').textContent   = 'Welcome back';
-                document.getElementById('lockSubtitle').textContent = 'Enter your password to unlock';
-                document.getElementById('lockActionBtn').textContent = 'Unlock';
-            }
+            document.getElementById('lockIcon').textContent = '🔐';
+            document.getElementById('lockTitle').textContent = 'Welcome back';
+            document.getElementById('lockSubtitle').textContent = 'Enter your password to continue';
+            document.getElementById('lockActionBtn').textContent = 'Unlock';
         }
 
-        // ── Income tracker logic ────────────────────────────────────────────
+        // ── Data ─────────────────────────────────────────────────────
         function loadEntries() {
             return JSON.parse(localStorage.getItem('incomeEntries') || '[]')
                 .sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -402,47 +608,96 @@
             localStorage.setItem('incomeEntries', JSON.stringify(entries));
         }
 
-        function calculateTotal() {
-            const entries = loadEntries();
-            const total = entries.reduce((sum, e) => sum + parseFloat(e.amount), 0);
-            document.getElementById('totalAmount').textContent = '€' + total.toFixed(2);
+        function formatDate(d) {
+            return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
         }
 
+        // ── Render ───────────────────────────────────────────────────
         function renderEntries() {
             const entries = loadEntries();
             const container = document.getElementById('entriesList');
+            const total = entries.reduce((s, e) => s + parseFloat(e.amount), 0);
+            document.getElementById('totalAmount').textContent = '€' + total.toFixed(2);
 
-            if (entries.length === 0) {
-                container.innerHTML = '<div class="empty-state">No income entries yet. Add your first entry above! 📝</div>';
-                calculateTotal();
+            if (!entries.length) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        No entries yet. Add your first one above.
+                    </div>`;
                 return;
             }
 
-            container.innerHTML = entries.map((entry, index) => `
-                <div class="entry-card">
-                    <div class="entry-header">
-                        <span class="entry-date">${formatDate(entry.date)}</span>
-                        <span class="entry-amount">€${parseFloat(entry.amount).toFixed(2)}</span>
+            container.innerHTML = entries.map((e, i) => `
+                <div class="entry-card" id="ecard-${i}">
+                    <div id="eview-${i}">
+                        <div class="entry-top">
+                            <span class="entry-job">${escHtml(e.job)}</span>
+                            <span class="entry-amount">€${parseFloat(e.amount).toFixed(2)}</span>
+                        </div>
+                        <div class="entry-meta">
+                            <span class="entry-date">${formatDate(e.date)}</span>
+                            <div class="entry-actions">
+                                <button class="btn-sm" onclick="startEdit(${i})">Edit</button>
+                                <button class="btn-sm btn-sm-danger" onclick="deleteEntry(${i})">Delete</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="entry-job">${entry.job}</div>
-                    <button class="entry-delete" onclick="deleteEntry(${index})">Delete</button>
                 </div>
             `).join('');
-
-            calculateTotal();
         }
 
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        function escHtml(str) {
+            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
 
+        // ── Edit ─────────────────────────────────────────────────────
+        function startEdit(i) {
+            const entries = loadEntries();
+            const e = entries[i];
+            document.getElementById(`eview-${i}`).outerHTML = `
+                <div id="eedit-${i}" class="entry-edit">
+                    <div class="entry-edit-row">
+                        <div>
+                            <label class="form-label">Date</label>
+                            <input type="date" id="edit-date-${i}" class="form-input" value="${e.date}">
+                        </div>
+                        <div>
+                            <label class="form-label">Amount (EUR)</label>
+                            <input type="number" id="edit-amount-${i}" class="form-input" value="${e.amount}" step="0.01" min="0">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label">Job / Source</label>
+                        <textarea id="edit-job-${i}" class="form-input">${escHtml(e.job)}</textarea>
+                    </div>
+                    <div class="entry-edit-actions">
+                        <button class="btn-save" onclick="saveEdit(${i})">Save</button>
+                        <button class="btn-cancel" onclick="renderEntries()">Cancel</button>
+                    </div>
+                </div>`;
+        }
+
+        function saveEdit(i) {
+            const date   = document.getElementById(`edit-date-${i}`).value;
+            const amount = document.getElementById(`edit-amount-${i}`).value;
+            const job    = document.getElementById(`edit-job-${i}`).value.trim();
+
+            if (!date || !amount || !job) return;
+
+            const entries = loadEntries();
+            entries[i] = { date, amount, job };
+            saveEntries(entries);
+            renderEntries();
+        }
+
+        // ── Add entry ────────────────────────────────────────────────
         document.getElementById('incomeForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const entry = {
                 date:   document.getElementById('dateInput').value,
                 amount: document.getElementById('amountInput').value,
-                job:    document.getElementById('jobInput').value
+                job:    document.getElementById('jobInput').value.trim()
             };
             const entries = loadEntries();
             entries.push(entry);
@@ -451,28 +706,28 @@
             document.getElementById('jobInput').value = '';
             document.getElementById('dateInput').valueAsDate = new Date();
             renderEntries();
-            if (navigator.vibrate) navigator.vibrate(50);
+            if (navigator.vibrate) navigator.vibrate(40);
         });
 
-        function deleteEntry(index) {
-            if (confirm('Delete this entry?')) {
-                const entries = loadEntries();
-                entries.splice(index, 1);
-                saveEntries(entries);
-                renderEntries();
-            }
+        // ── Delete ───────────────────────────────────────────────────
+        function deleteEntry(i) {
+            if (!confirm('Delete this entry?')) return;
+            const entries = loadEntries();
+            entries.splice(i, 1);
+            saveEntries(entries);
+            renderEntries();
         }
 
+        // ── Export ───────────────────────────────────────────────────
         function exportToCSV() {
             const entries = loadEntries();
-            if (entries.length === 0) { alert('No entries to export!'); return; }
+            if (!entries.length) { alert('No entries to export.'); return; }
             let csv = 'Date,Amount (EUR),Job/Source\n';
-            entries.forEach(e => { csv += `${e.date},${e.amount},"${e.job}"\n`; });
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `income-tracker-${new Date().toISOString().split('T')[0]}.csv`;
+            entries.forEach(e => { csv += `${e.date},${e.amount},"${e.job.replace(/"/g,'""')}"\n`; });
+            const a = Object.assign(document.createElement('a'), {
+                href: URL.createObjectURL(new Blob([csv], { type: 'text/csv' })),
+                download: `income-${new Date().toISOString().slice(0,10)}.csv`
+            });
             a.click();
         }
     </script>
