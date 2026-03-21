@@ -250,6 +250,49 @@
             font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700;
             letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px;
         }
+
+        /* ── Received banner ──────────────────────────────────────── */
+        .received-banner {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 18px; margin-bottom: 16px; box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .received-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 24px; cursor: pointer; user-select: none;
+        }
+        .received-header-left { display: flex; flex-direction: column; gap: 3px; }
+        .received-header-label {
+            font-size: 12px; font-weight: 600; letter-spacing: .1em;
+            text-transform: uppercase; color: var(--ink-3);
+        }
+        .received-total {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 26px; font-weight: 700; color: var(--ink-2);
+        }
+        .received-toggle {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: #f1f5f9; border: 1.5px solid var(--border-2);
+            font-size: 18px; line-height: 1; color: var(--ink-2);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background .15s, border-color .15s;
+            flex-shrink: 0;
+        }
+        .received-toggle:hover { background: var(--border); border-color: var(--ink-3); }
+        .received-form-wrap {
+            display: none; padding: 0 24px 20px; border-top: 1px solid var(--border);
+        }
+        .received-form-wrap.open { display: block; padding-top: 20px; }
+
+        /* ── Received badge on entry cards ───────────────────────── */
+        .entry-badge {
+            display: inline-block; padding: 2px 8px;
+            background: #f1f5f9; border: 1px solid var(--border-2);
+            border-radius: 5px; font-size: 11px; font-weight: 600;
+            letter-spacing: .05em; text-transform: uppercase;
+            color: var(--ink-3); margin-bottom: 6px;
+        }
+        .entry-card.received .entry-amount { color: var(--ink-3); }
     </style>
 </head>
 <body>
@@ -321,6 +364,36 @@
                     </div>
                     <button type="submit" class="btn-primary" id="addBtn">Add Entry</button>
                 </form>
+            </div>
+
+            <!-- Received -->
+            <div class="received-banner">
+                <div class="received-header" id="receivedHeader">
+                    <div class="received-header-left">
+                        <span class="received-header-label">Total Received</span>
+                        <span class="received-total" id="receivedAmount">€0.00</span>
+                    </div>
+                    <button class="received-toggle" id="receivedToggle" title="Add received entry">+</button>
+                </div>
+                <div class="received-form-wrap" id="receivedFormWrap">
+                    <form id="receivedForm">
+                        <div class="entry-edit-row" style="margin-bottom:12px">
+                            <div>
+                                <label class="form-label" for="rDateInput">Date</label>
+                                <input type="date" id="rDateInput" class="form-input" required>
+                            </div>
+                            <div>
+                                <label class="form-label" for="rAmountInput">Amount (EUR)</label>
+                                <input type="number" id="rAmountInput" class="form-input" placeholder="0.00" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        <div style="margin-bottom:12px">
+                            <label class="form-label" for="rNotesInput">Notes</label>
+                            <textarea id="rNotesInput" class="form-input" placeholder="e.g., Payment from client X" required></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary" id="addReceivedBtn">Add Received Entry</button>
+                    </form>
+                </div>
             </div>
 
             <button class="btn-outline" id="exportBtn">Export to CSV</button>
@@ -540,8 +613,12 @@
 
         // ── Render ────────────────────────────────────────────────────
         function renderEntries(entries) {
-            const total = entries.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
-            document.getElementById('totalAmount').textContent = '€' + total.toFixed(2);
+            const income   = entries.filter(e => e.type !== 'received');
+            const received = entries.filter(e => e.type === 'received');
+            const total    = income.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+            const recTotal = received.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+            document.getElementById('totalAmount').textContent   = '€' + total.toFixed(2);
+            document.getElementById('receivedAmount').textContent = '€' + recTotal.toFixed(2);
 
             const list = document.getElementById('entriesList');
             if (!entries.length) {
@@ -550,11 +627,15 @@
             }
             list.innerHTML = entries
                 .slice().sort((a, b) => new Date(b.date) - new Date(a.date))
-                .map(e => `
-                    <div class="entry-card" data-id="${esc(e.id)}" data-date="${esc(e.date)}">
+                .map(e => {
+                    const isReceived = e.type === 'received';
+                    const label      = isReceived ? esc(e.notes || e.job || '') : esc(e.job || '');
+                    return `
+                    <div class="entry-card${isReceived ? ' received' : ''}" data-id="${esc(e.id)}" data-date="${esc(e.date)}" data-type="${isReceived ? 'received' : 'income'}">
                         <div class="entry-view">
+                            ${isReceived ? '<span class="entry-badge">Received</span>' : ''}
                             <div class="entry-top">
-                                <span class="entry-job">${esc(e.job)}</span>
+                                <span class="entry-job">${label}</span>
                                 <span class="entry-amount">€${parseFloat(e.amount).toFixed(2)}</span>
                             </div>
                             <div class="entry-meta">
@@ -565,7 +646,8 @@
                                 </div>
                             </div>
                         </div>
-                    </div>`).join('');
+                    </div>`;
+                }).join('');
         }
 
         // ── Entry actions ─────────────────────────────────────────────
@@ -584,7 +666,8 @@
         });
 
         function openEdit(card) {
-            const job    = card.querySelector('.entry-job').textContent;
+            const isReceived = card.dataset.type === 'received';
+            const label  = card.querySelector('.entry-job').textContent;
             const amount = card.querySelector('.entry-amount').textContent.replace('€','').trim();
             const date   = card.dataset.date;
             card.querySelector('.entry-view').outerHTML = `
@@ -600,8 +683,8 @@
                         </div>
                     </div>
                     <div>
-                        <label class="form-label">Job / Source</label>
-                        <textarea class="form-input edit-job">${esc(job)}</textarea>
+                        <label class="form-label">${isReceived ? 'Notes' : 'Job / Source'}</label>
+                        <textarea class="form-input edit-label">${esc(label)}</textarea>
                     </div>
                     <div class="entry-edit-actions">
                         <button class="btn-save"   data-action="save">Save</button>
@@ -611,14 +694,19 @@
         }
 
         async function commitEdit(card, id) {
-            const date   = card.querySelector('.edit-date').value;
-            const amount = card.querySelector('.edit-amount').value;
-            const job    = card.querySelector('.edit-job').value.trim();
-            if (!date || !amount || !job) return;
+            const date       = card.querySelector('.edit-date').value;
+            const amount     = card.querySelector('.edit-amount').value;
+            const labelVal   = card.querySelector('.edit-label').value.trim();
+            const isReceived = card.dataset.type === 'received';
+            if (!date || !amount || !labelVal) return;
             try {
                 const entries = await loadData();
                 const idx = entries.findIndex(e => e.id === id);
-                if (idx !== -1) entries[idx] = { id, date, amount, job };
+                if (idx !== -1) {
+                    entries[idx] = isReceived
+                        ? { id, type: 'received', date, amount, notes: labelVal }
+                        : { id, date, amount, job: labelVal };
+                }
                 await saveData(entries);
                 renderEntries(entries);
             } catch (err) {
@@ -662,6 +750,45 @@
                 setSync('error', err.message || 'Save failed'); console.error(err);
             }
             btn.textContent = 'Add Entry'; btn.disabled = false;
+        });
+
+        // ── Received toggle ───────────────────────────────────────────
+        document.getElementById('receivedHeader').addEventListener('click', () => {
+            const wrap = document.getElementById('receivedFormWrap');
+            const btn  = document.getElementById('receivedToggle');
+            const open = wrap.classList.toggle('open');
+            btn.textContent = open ? '×' : '+';
+            if (open) document.getElementById('rDateInput').valueAsDate = new Date();
+        });
+
+        // ── Add received entry ────────────────────────────────────────
+        document.getElementById('receivedForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const btn   = document.getElementById('addReceivedBtn');
+            const entry = {
+                id:     uid(),
+                type:   'received',
+                date:   document.getElementById('rDateInput').value,
+                amount: document.getElementById('rAmountInput').value,
+                notes:  document.getElementById('rNotesInput').value.trim()
+            };
+            btn.textContent = 'Saving…'; btn.disabled = true;
+            try {
+                const entries = await loadData();
+                entries.push(entry);
+                await saveData(entries);
+                renderEntries(entries);
+                document.getElementById('rAmountInput').value = '';
+                document.getElementById('rNotesInput').value  = '';
+                document.getElementById('rDateInput').valueAsDate = new Date();
+                // close the form
+                document.getElementById('receivedFormWrap').classList.remove('open');
+                document.getElementById('receivedToggle').textContent = '+';
+                if (navigator.vibrate) navigator.vibrate(40);
+            } catch (err) {
+                setSync('error', err.message || 'Save failed'); console.error(err);
+            }
+            btn.textContent = 'Add Received Entry'; btn.disabled = false;
         });
 
         // ── Export ─────────────────────────────────────────────────────
