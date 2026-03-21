@@ -357,27 +357,42 @@
         }
         function getToken() { return localStorage.getItem('ghToken'); }
 
+        // ── Base64 helpers (Unicode-safe) ────────────────────────────
+        function b64encode(str) {
+            // btoa() only handles Latin-1; encode via UTF-8 bytes first
+            const bytes = new TextEncoder().encode(str);
+            let binary  = '';
+            bytes.forEach(b => binary += String.fromCharCode(b));
+            return btoa(binary);
+        }
+        function b64decode(b64) {
+            const binary = atob(b64.replace(/\n/g, ''));
+            const bytes  = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            return new TextDecoder().decode(bytes);
+        }
+
         // ── GitHub API ───────────────────────────────────────────────
-        let _sha = null; // current file SHA (needed for updates)
+        let _sha = null;
 
         async function ghFetch(method, body) {
             const opts = {
                 method,
-                headers: {
-                    'Authorization': `token ${getToken()}`,
-                    'Content-Type':  'application/json'
-                }
+                headers: { 'Authorization': `token ${getToken()}`, 'Content-Type': 'application/json' }
             };
             if (body) opts.body = JSON.stringify(body);
             const res = await fetch(API, opts);
-            if (!res.ok) throw new Error(`GitHub ${res.status}`);
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.message || `GitHub ${res.status}`);
+            }
             return res.json();
         }
 
         async function loadData() {
             setSync('syncing', 'Loading…');
             const data    = await ghFetch('GET');
-            const content = JSON.parse(atob(data.content.replace(/\n/g, '')));
+            const content = JSON.parse(b64decode(data.content));
             _sha = data.sha;
             setSync('synced', 'Synced');
             return content.entries || [];
@@ -385,14 +400,29 @@
 
         async function saveData(entries) {
             setSync('syncing', 'Saving…');
-            const content = btoa(JSON.stringify({ entries }, null, 2));
             const res = await ghFetch('PUT', {
                 message: 'update entries',
-                content,
-                sha: _sha
+                content: b64encode(JSON.stringify({ entries }, null, 2)),
+                sha:     _sha
             });
             _sha = res.content.sha;
             setSync('synced', 'Saved');
+        }
+
+        // ── Migrate old localStorage entries on first GitHub save ────
+        function migrateLocalStorage(existing) {
+            const old = JSON.parse(localStorage.getItem('incomeEntries') || '[]');
+            if (!old.length) return existing;
+            // assign ids to migrated entries, avoid duplicates
+            const existingIds = new Set(existing.map(e => e.id));
+            const migrated = old
+                .filter(e => !existingIds.has(e.id))
+                .map(e => ({ id: e.id || uid(), date: e.date, amount: e.amount, job: e.job }));
+            if (migrated.length) {
+                console.log(`Migrating ${migrated.length} entries from localStorage`);
+                localStorage.removeItem('incomeEntries'); // clear after migration
+            }
+            return [...existing, ...migrated];
         }
 
         // ── Lock screen ──────────────────────────────────────────────
@@ -481,10 +511,16 @@
             document.getElementById('app').style.display = 'block';
             document.getElementById('dateInput').valueAsDate = new Date();
             try {
-                const entries = await loadData();
+                let entries = await loadData();
+                // On first load, pull in any entries saved in localStorage by the old app
+                const merged = migrateLocalStorage(entries);
+                if (merged.length !== entries.length) {
+                    await saveData(merged); // push migrated entries to GitHub
+                    entries = merged;
+                }
                 renderEntries(entries);
             } catch (err) {
-                setSync('error', 'Failed to load');
+                setSync('error', err.message || 'Failed to load');
                 console.error(err);
             }
         }
@@ -586,7 +622,7 @@
                 await saveData(entries);
                 renderEntries(entries);
             } catch (err) {
-                setSync('error', 'Save failed'); console.error(err);
+                setSync('error', err.message || 'Save failed'); console.error(err);
             }
         }
 
@@ -594,11 +630,11 @@
             if (!confirm('Delete this entry?')) return;
             try {
                 const entries = await loadData();
-                await saveData(entries.filter(e => e.id !== id));
-                const updated = await loadData();
-                renderEntries(updated);
+                const filtered = entries.filter(e => e.id !== id);
+                await saveData(filtered);
+                renderEntries(filtered);
             } catch (err) {
-                setSync('error', 'Delete failed'); console.error(err);
+                setSync('error', err.message || 'Delete failed'); console.error(err);
             }
         }
 
@@ -623,7 +659,7 @@
                 document.getElementById('dateInput').valueAsDate = new Date();
                 if (navigator.vibrate) navigator.vibrate(40);
             } catch (err) {
-                setSync('error', 'Save failed'); console.error(err);
+                setSync('error', err.message || 'Save failed'); console.error(err);
             }
             btn.textContent = 'Add Entry'; btn.disabled = false;
         });
