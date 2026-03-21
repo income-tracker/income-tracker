@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>Income Tracker</title>
@@ -21,6 +22,8 @@
             --border-2:  #cbd5e1;
             --card:      #ffffff;
             --red:       #ef4444;
+            --green:     #22c55e;
+            --amber:     #f59e0b;
             --radius:    14px;
             --shadow:    0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
             --shadow-lg: 0 4px 6px rgba(0,0,0,.05), 0 16px 48px rgba(0,0,0,.1);
@@ -28,69 +31,82 @@
 
         body {
             font-family: 'Inter', -apple-system, sans-serif;
-            background: var(--bg);
-            background-attachment: fixed;
-            min-height: 100vh;
-            color: var(--ink);
+            background: var(--bg); background-attachment: fixed;
+            min-height: 100vh; color: var(--ink);
         }
 
-        /* ─── Lock Screen ─────────────────────────────────────── */
-        #lockScreen {
+        /* ── Screens ────────────────────────────────────────────── */
+        .screen {
             position: fixed; inset: 0;
             background: var(--bg); background-attachment: fixed;
             display: flex; align-items: center; justify-content: center;
             z-index: 9999; padding: 24px;
         }
-        #lockScreen.hidden { display: none; }
+        .screen.hidden { display: none; }
 
-        .lock-card {
+        /* ── Auth card (shared by lock + token screens) ─────────── */
+        .auth-card {
             background: var(--card); border: 1px solid var(--border);
             border-radius: 20px; padding: 40px 32px 32px;
-            width: 100%; max-width: 360px;
+            width: 100%; max-width: 380px;
             box-shadow: var(--shadow-lg); text-align: center;
         }
-        .lock-wordmark {
+        .auth-wordmark {
             font-family: 'Space Grotesk', sans-serif;
             font-size: 13px; font-weight: 700;
             letter-spacing: .12em; text-transform: uppercase;
             color: var(--ink-3); margin-bottom: 32px;
         }
-        .lock-icon {
+        .auth-icon {
             width: 52px; height: 52px; border-radius: 14px;
             background: var(--ink); color: white; font-size: 22px;
             display: flex; align-items: center; justify-content: center;
             margin: 0 auto 20px;
         }
-        .lock-title {
+        .auth-title {
             font-family: 'Space Grotesk', sans-serif;
             font-size: 20px; font-weight: 700; color: var(--ink); margin-bottom: 6px;
         }
-        .lock-subtitle { font-size: 14px; color: var(--ink-2); margin-bottom: 28px; line-height: 1.5; }
-        .lock-input {
-            width: 100%; padding: 13px 16px;
+        .auth-subtitle { font-size: 14px; color: var(--ink-2); margin-bottom: 28px; line-height: 1.5; }
+
+        .auth-input {
+            width: 100%; height: 46px; padding: 0 14px;
             border: 1.5px solid var(--border-2); border-radius: var(--radius);
-            font-family: 'Inter', sans-serif; font-size: 16px;
-            text-align: center; letter-spacing: 6px;
+            font-family: 'Inter', sans-serif; font-size: 15px;
             color: var(--ink); background: #f8fafc;
-            margin-bottom: 12px;
+            margin-bottom: 12px; -webkit-appearance: none;
             transition: border-color .2s, box-shadow .2s;
-            -webkit-appearance: none;
         }
-        .lock-input:focus {
+        .auth-input.pw { text-align: center; letter-spacing: 6px; font-size: 16px; }
+        .auth-input:focus {
             outline: none; border-color: var(--ink);
             box-shadow: 0 0 0 3px rgba(15,23,42,.08); background: white;
         }
-        .lock-btn {
+        .auth-input.token-input { letter-spacing: 0; font-size: 13px; font-family: monospace; }
+
+        .auth-btn {
             width: 100%; padding: 14px;
             background: var(--ink); color: white; border: none;
             border-radius: var(--radius); font-family: 'Inter', sans-serif;
             font-size: 15px; font-weight: 600; cursor: pointer;
             transition: opacity .15s; margin-bottom: 10px;
         }
-        .lock-btn:active { opacity: .8; }
-        .lock-error { color: var(--red); font-size: 13px; min-height: 18px; }
+        .auth-btn:active { opacity: .8; }
+        .auth-error { color: var(--red); font-size: 13px; min-height: 18px; }
 
-        /* ─── App ─────────────────────────────────────────────── */
+        .token-hint {
+            margin-top: 16px; padding: 14px;
+            background: #f8fafc; border: 1px solid var(--border);
+            border-radius: 10px; text-align: left;
+            font-size: 13px; color: var(--ink-2); line-height: 1.6;
+        }
+        .token-hint a { color: var(--ink); font-weight: 600; }
+        .token-hint code {
+            background: var(--border); border-radius: 4px;
+            padding: 1px 5px; font-size: 12px;
+        }
+
+        /* ── App ────────────────────────────────────────────────── */
         #app { display: none; }
         #app.visible { display: block; }
 
@@ -106,13 +122,13 @@
             letter-spacing: .1em; text-transform: uppercase; color: var(--ink);
         }
         .topnav-right { display: flex; align-items: center; gap: 10px; }
-        .sync-status { display: flex; align-items: center; gap: 5px; }
+        .sync-status { display: flex; align-items: center; gap: 5px; cursor: default; }
         .sync-dot {
             width: 7px; height: 7px; border-radius: 50%;
             background: var(--ink-3); transition: background .3s;
         }
-        .sync-dot.synced  { background: #22c55e; }
-        .sync-dot.syncing { background: #f59e0b; }
+        .sync-dot.synced  { background: var(--green); }
+        .sync-dot.syncing { background: var(--amber); }
         .sync-dot.error   { background: var(--red); }
         .sync-label { font-size: 12px; color: var(--ink-3); }
         .topnav-lock {
@@ -126,16 +142,15 @@
 
         .page { max-width: 520px; margin: 0 auto; padding: 28px 20px 80px; }
 
-        /* ─── Total ───────────────────────────────────────────── */
         .total-banner {
             background: var(--ink); border-radius: 18px;
             padding: 28px 28px 24px; margin-bottom: 20px;
             position: relative; overflow: hidden;
         }
         .total-banner::before {
-            content: ''; position: absolute;
-            top: -40px; right: -40px; width: 160px; height: 160px;
-            border-radius: 50%; background: rgba(255,255,255,.04);
+            content: ''; position: absolute; top: -40px; right: -40px;
+            width: 160px; height: 160px; border-radius: 50%;
+            background: rgba(255,255,255,.04);
         }
         .total-label {
             font-size: 12px; font-weight: 600; letter-spacing: .1em;
@@ -146,7 +161,6 @@
             font-size: 44px; font-weight: 700; color: white; line-height: 1;
         }
 
-        /* ─── Cards ───────────────────────────────────────────── */
         .card {
             background: var(--card); border: 1px solid var(--border);
             border-radius: 18px; padding: 24px; margin-bottom: 16px;
@@ -154,26 +168,19 @@
         }
         .card-title {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 13px; font-weight: 700;
-            letter-spacing: .08em; text-transform: uppercase;
-            color: var(--ink-3); margin-bottom: 20px;
+            font-size: 13px; font-weight: 700; letter-spacing: .08em;
+            text-transform: uppercase; color: var(--ink-3); margin-bottom: 20px;
         }
 
-        /* ─── Form ────────────────────────────────────────────── */
         .form-group { margin-bottom: 16px; }
         .form-group:last-child { margin-bottom: 0; }
         .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--ink-2); margin-bottom: 7px; }
         .form-input {
-            width: 100%;
-            /* explicit height keeps date input aligned on iOS/iPad */
-            height: 46px;
-            padding: 0 14px;
+            width: 100%; height: 46px; padding: 0 14px;
             border: 1.5px solid var(--border-2); border-radius: 10px;
             font-family: 'Inter', sans-serif; font-size: 15px;
-            color: var(--ink); background: #f8fafc;
+            color: var(--ink); background: #f8fafc; -webkit-appearance: none;
             transition: border-color .2s, box-shadow .2s, background .2s;
-            -webkit-appearance: none;
-            display: flex; align-items: center;
         }
         .form-input:focus {
             outline: none; border-color: var(--ink);
@@ -184,38 +191,30 @@
             resize: vertical; line-height: 1.5;
         }
         .btn-primary {
-            width: 100%; padding: 14px;
-            background: var(--ink); color: white; border: none;
-            border-radius: 10px; font-family: 'Inter', sans-serif;
+            width: 100%; padding: 14px; background: var(--ink); color: white;
+            border: none; border-radius: 10px; font-family: 'Inter', sans-serif;
             font-size: 15px; font-weight: 600; cursor: pointer;
             transition: opacity .15s; margin-top: 4px;
         }
         .btn-primary:active { opacity: .8; }
+        .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
 
         .btn-outline {
-            width: 100%; padding: 13px;
-            background: transparent; color: var(--ink-2);
+            width: 100%; padding: 13px; background: transparent; color: var(--ink-2);
             border: 1.5px solid var(--border-2); border-radius: 10px;
             font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
             cursor: pointer; transition: border-color .15s, color .15s; margin-bottom: 20px;
         }
         .btn-outline:hover { border-color: var(--ink); color: var(--ink); }
 
-        /* ─── Entry cards ─────────────────────────────────────── */
         .entry-list { display: flex; flex-direction: column; gap: 10px; }
         .entry-card {
             background: var(--card); border: 1px solid var(--border);
             border-radius: 14px; padding: 18px 20px; box-shadow: var(--shadow);
         }
-        .entry-top {
-            display: flex; justify-content: space-between;
-            align-items: flex-start; gap: 12px; margin-bottom: 6px;
-        }
+        .entry-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 6px; }
         .entry-job { font-size: 15px; font-weight: 500; color: var(--ink); flex: 1; line-height: 1.4; }
-        .entry-amount {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 18px; font-weight: 700; color: var(--ink); white-space: nowrap;
-        }
+        .entry-amount { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: var(--ink); white-space: nowrap; }
         .entry-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
         .entry-date { font-size: 12px; color: var(--ink-3); }
         .entry-actions { display: flex; gap: 6px; }
@@ -231,7 +230,6 @@
         .btn-sm-danger { border-color: #fecaca; color: var(--red); background: #fff5f5; }
         .btn-sm-danger:hover { border-color: var(--red); background: #fee2e2; }
 
-        /* ─── Entry edit mode ─────────────────────────────────── */
         .entry-edit { display: flex; flex-direction: column; gap: 10px; }
         .entry-edit-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .entry-edit-actions { display: flex; gap: 8px; margin-top: 2px; }
@@ -246,29 +244,45 @@
             font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer;
         }
 
-        /* ─── Misc ────────────────────────────────────────────── */
         .empty-state { text-align: center; padding: 40px 20px; color: var(--ink-3); font-size: 14px; }
         .empty-icon  { font-size: 32px; margin-bottom: 10px; }
         .section-label {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 12px; font-weight: 700;
-            letter-spacing: .1em; text-transform: uppercase;
-            color: var(--ink-3); margin-bottom: 12px;
+            font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700;
+            letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px;
         }
     </style>
 </head>
 <body>
 
-    <!-- Lock Screen -->
-    <div id="lockScreen">
-        <div class="lock-card">
-            <div class="lock-wordmark">Income Tracker</div>
-            <div class="lock-icon" id="lockIcon">🔐</div>
-            <div class="lock-title" id="lockTitle">Welcome back</div>
-            <div class="lock-subtitle" id="lockSubtitle">Enter your password to continue</div>
-            <input type="password" id="lockInput" class="lock-input" placeholder="••••••••" autocomplete="current-password">
-            <button class="lock-btn" id="lockBtn">Unlock</button>
-            <div class="lock-error" id="lockError"></div>
+    <!-- Lock screen -->
+    <div class="screen" id="lockScreen">
+        <div class="auth-card">
+            <div class="auth-wordmark">Income Tracker</div>
+            <div class="auth-icon" id="lockIcon">🔐</div>
+            <div class="auth-title" id="lockTitle">Welcome back</div>
+            <div class="auth-subtitle" id="lockSubtitle">Enter your password to continue</div>
+            <input type="password" id="lockInput" class="auth-input pw" placeholder="••••••••" autocomplete="current-password">
+            <button class="auth-btn" id="lockBtn">Unlock</button>
+            <div class="auth-error" id="lockError"></div>
+        </div>
+    </div>
+
+    <!-- Token setup screen -->
+    <div class="screen hidden" id="tokenScreen">
+        <div class="auth-card">
+            <div class="auth-wordmark">Income Tracker</div>
+            <div class="auth-icon">🔑</div>
+            <div class="auth-title">Connect GitHub</div>
+            <div class="auth-subtitle">Enter your GitHub token to enable sync across devices</div>
+            <input type="password" id="tokenInput" class="auth-input token-input" placeholder="ghp_…" autocomplete="off">
+            <button class="auth-btn" id="tokenBtn">Connect</button>
+            <div class="auth-error" id="tokenError"></div>
+            <div class="token-hint">
+                Go to <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a>
+                → <strong>Generate new token (classic)</strong>
+                → tick <code>repo</code> scope → copy and paste it above.
+                It's saved only on this device.
+            </div>
         </div>
     </div>
 
@@ -284,7 +298,6 @@
                 <button class="topnav-lock" id="lockAppBtn">Lock</button>
             </div>
         </nav>
-
         <div class="page">
             <div class="total-banner">
                 <div class="total-label">Total Income</div>
@@ -306,7 +319,7 @@
                         <label class="form-label" for="jobInput">Job / Source</label>
                         <textarea id="jobInput" class="form-input" placeholder="e.g., Casino blog article" required></textarea>
                     </div>
-                    <button type="submit" class="btn-primary">Add Entry</button>
+                    <button type="submit" class="btn-primary" id="addBtn">Add Entry</button>
                 </form>
             </div>
 
@@ -317,23 +330,14 @@
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp }                                    from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-        import { getDatabase, ref, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+    <script>
+        // ── Config ───────────────────────────────────────────────────
+        const OWNER = 'income-tracker';
+        const REPO  = 'income-data';
+        const FILE  = 'data.json';
+        const API   = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE}`;
 
-        // ── Firebase ───────────────────────────────────────────────
-        const db = getDatabase(initializeApp({
-            apiKey:            "AIzaSyDM8q5F5rLduKY4Yic-65bmsROIkE5I8Cc",
-            authDomain:        "income-tracker-c9bd7.firebaseapp.com",
-            databaseURL:       "https://income-tracker-c9bd7-default-rtdb.firebaseio.com",
-            projectId:         "income-tracker-c9bd7",
-            storageBucket:     "income-tracker-c9bd7.firebasestorage.app",
-            messagingSenderId: "845846498673",
-            appId:             "1:845846498673:web:d2fffa7c9c3100a9073ad0"
-        }));
-        const entriesRef = ref(db, 'entries');
-
-        // ── Helpers ────────────────────────────────────────────────
+        // ── Helpers ──────────────────────────────────────────────────
         async function sha256(text) {
             const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
             return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
@@ -344,14 +348,55 @@
         function fmtDate(d) {
             return new Date(d).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
         }
+        function uid() {
+            return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+        }
         function setSync(state, label) {
             document.getElementById('syncDot').className   = 'sync-dot' + (state ? ' ' + state : '');
             document.getElementById('syncLabel').textContent = label;
         }
+        function getToken() { return localStorage.getItem('ghToken'); }
 
-        // ── Lock screen ────────────────────────────────────────────
+        // ── GitHub API ───────────────────────────────────────────────
+        let _sha = null; // current file SHA (needed for updates)
+
+        async function ghFetch(method, body) {
+            const opts = {
+                method,
+                headers: {
+                    'Authorization': `token ${getToken()}`,
+                    'Content-Type':  'application/json'
+                }
+            };
+            if (body) opts.body = JSON.stringify(body);
+            const res = await fetch(API, opts);
+            if (!res.ok) throw new Error(`GitHub ${res.status}`);
+            return res.json();
+        }
+
+        async function loadData() {
+            setSync('syncing', 'Loading…');
+            const data    = await ghFetch('GET');
+            const content = JSON.parse(atob(data.content.replace(/\n/g, '')));
+            _sha = data.sha;
+            setSync('synced', 'Synced');
+            return content.entries || [];
+        }
+
+        async function saveData(entries) {
+            setSync('syncing', 'Saving…');
+            const content = btoa(JSON.stringify({ entries }, null, 2));
+            const res = await ghFetch('PUT', {
+                message: 'update entries',
+                content,
+                sha: _sha
+            });
+            _sha = res.content.sha;
+            setSync('synced', 'Saved');
+        }
+
+        // ── Lock screen ──────────────────────────────────────────────
         let isFirstTime = !localStorage.getItem('pwHash');
-        let unsubscribe = null;
 
         if (isFirstTime) {
             document.getElementById('lockIcon').textContent    = '🔑';
@@ -376,10 +421,10 @@
                 if (val.length < 4) { errEl.textContent = 'Use at least 4 characters.'; return; }
                 localStorage.setItem('pwHash', await sha256(val));
                 isFirstTime = false;
-                showApp();
+                afterUnlock();
             } else {
                 if (await sha256(val) === localStorage.getItem('pwHash')) {
-                    showApp();
+                    afterUnlock();
                 } else {
                     errEl.textContent = 'Incorrect password.';
                     document.getElementById('lockInput').value = '';
@@ -388,20 +433,67 @@
             }
         }
 
-        function showApp() {
+        function afterUnlock() {
             document.getElementById('lockScreen').classList.add('hidden');
-            document.getElementById('app').classList.add('visible');
+            if (!getToken()) {
+                document.getElementById('tokenScreen').classList.remove('hidden');
+            } else {
+                showApp();
+            }
+        }
+
+        // ── Token screen ─────────────────────────────────────────────
+        document.getElementById('tokenBtn').addEventListener('click', saveToken);
+        document.getElementById('tokenInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') saveToken();
+        });
+
+        async function saveToken() {
+            const val   = document.getElementById('tokenInput').value.trim();
+            const errEl = document.getElementById('tokenError');
+            errEl.textContent = '';
+            if (!val.startsWith('ghp_') && !val.startsWith('github_pat_')) {
+                errEl.textContent = 'Paste a valid GitHub token (starts with ghp_).';
+                return;
+            }
+            // Quick validation — try to read the file
+            document.getElementById('tokenBtn').textContent = 'Checking…';
+            document.getElementById('tokenBtn').disabled   = true;
+            try {
+                const res = await fetch(API, {
+                    headers: { 'Authorization': `token ${val}` }
+                });
+                if (res.status === 401) { throw new Error('Invalid token or no access.'); }
+                if (res.status === 404) { throw new Error('Repo not found — make sure you used the right token.'); }
+                if (!res.ok)            { throw new Error(`GitHub error ${res.status}`); }
+                localStorage.setItem('ghToken', val);
+                document.getElementById('tokenScreen').classList.add('hidden');
+                showApp();
+            } catch (err) {
+                errEl.textContent = err.message;
+                document.getElementById('tokenBtn').textContent = 'Connect';
+                document.getElementById('tokenBtn').disabled   = false;
+            }
+        }
+
+        // ── App ───────────────────────────────────────────────────────
+        async function showApp() {
+            document.getElementById('app').style.display = 'block';
             document.getElementById('dateInput').valueAsDate = new Date();
-            startSync();
+            try {
+                const entries = await loadData();
+                renderEntries(entries);
+            } catch (err) {
+                setSync('error', 'Failed to load');
+                console.error(err);
+            }
         }
 
         document.getElementById('lockAppBtn').addEventListener('click', () => {
-            if (unsubscribe) { unsubscribe(); unsubscribe = null; }
-            document.getElementById('app').classList.remove('visible');
+            document.getElementById('app').style.display = 'none';
             document.getElementById('lockScreen').classList.remove('hidden');
-            document.getElementById('lockInput').value = '';
+            document.getElementById('lockInput').value      = '';
             document.getElementById('lockError').textContent = '';
-            // reset lock screen to "Welcome back" state
             document.getElementById('lockIcon').textContent     = '🔐';
             document.getElementById('lockTitle').textContent    = 'Welcome back';
             document.getElementById('lockSubtitle').textContent = 'Enter your password to continue';
@@ -410,23 +502,7 @@
             setSync('', '');
         });
 
-        // ── Firebase sync ──────────────────────────────────────────
-        function startSync() {
-            setSync('syncing', 'Syncing…');
-            unsubscribe = onValue(entriesRef,
-                snapshot => {
-                    const raw = snapshot.val() || {};
-                    const entries = Object.entries(raw)
-                        .map(([key, val]) => ({ key, ...val }))
-                        .sort((a, b) => new Date(b.date) - new Date(a.date));
-                    renderEntries(entries);
-                    setSync('synced', 'Synced');
-                },
-                () => setSync('error', 'Offline')
-            );
-        }
-
-        // ── Render ─────────────────────────────────────────────────
+        // ── Render ────────────────────────────────────────────────────
         function renderEntries(entries) {
             const total = entries.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
             document.getElementById('totalAmount').textContent = '€' + total.toFixed(2);
@@ -436,36 +512,38 @@
                 list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div>No entries yet. Add your first one above.</div>`;
                 return;
             }
-            list.innerHTML = entries.map(e => `
-                <div class="entry-card" data-key="${esc(e.key)}" data-date="${esc(e.date)}">
-                    <div class="entry-view">
-                        <div class="entry-top">
-                            <span class="entry-job">${esc(e.job)}</span>
-                            <span class="entry-amount">€${parseFloat(e.amount).toFixed(2)}</span>
-                        </div>
-                        <div class="entry-meta">
-                            <span class="entry-date">${fmtDate(e.date)}</span>
-                            <div class="entry-actions">
-                                <button class="btn-sm"            data-action="edit">Edit</button>
-                                <button class="btn-sm btn-sm-danger" data-action="delete">Delete</button>
+            list.innerHTML = entries
+                .slice().sort((a, b) => new Date(b.date) - new Date(a.date))
+                .map(e => `
+                    <div class="entry-card" data-id="${esc(e.id)}" data-date="${esc(e.date)}">
+                        <div class="entry-view">
+                            <div class="entry-top">
+                                <span class="entry-job">${esc(e.job)}</span>
+                                <span class="entry-amount">€${parseFloat(e.amount).toFixed(2)}</span>
+                            </div>
+                            <div class="entry-meta">
+                                <span class="entry-date">${fmtDate(e.date)}</span>
+                                <div class="entry-actions">
+                                    <button class="btn-sm"               data-action="edit">Edit</button>
+                                    <button class="btn-sm btn-sm-danger" data-action="delete">Delete</button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>`).join('');
+                    </div>`).join('');
         }
 
-        // ── Entry actions (event delegation) ──────────────────────
+        // ── Entry actions ─────────────────────────────────────────────
         document.getElementById('entriesList').addEventListener('click', async e => {
             const btn  = e.target.closest('[data-action]');
             if (!btn) return;
-            const card = btn.closest('[data-key]');
-            const key  = card.dataset.key;
-
-            switch (btn.dataset.action) {
-                case 'edit':   openEdit(card); break;
-                case 'cancel': closeEdit(card); break;
-                case 'save':   await commitEdit(card, key); break;
-                case 'delete': await deleteEntry(key); break;
+            const card = btn.closest('[data-id]');
+            const id   = card.dataset.id;
+            if (btn.dataset.action === 'edit')   openEdit(card);
+            if (btn.dataset.action === 'delete') await deleteEntry(id);
+            if (btn.dataset.action === 'save')   await commitEdit(card, id);
+            if (btn.dataset.action === 'cancel') {
+                const entries = await loadData();
+                renderEntries(entries);
             }
         });
 
@@ -496,62 +574,75 @@
                 </div>`;
         }
 
-        function closeEdit(card) {
-            // Pull fresh data for this card from Firebase once
-            onValue(entriesRef, snapshot => {
-                const raw = snapshot.val() || {};
-                const entries = Object.entries(raw)
-                    .map(([key, val]) => ({ key, ...val }))
-                    .sort((a, b) => new Date(b.date) - new Date(a.date));
-                renderEntries(entries);
-            }, { onlyOnce: true });
-        }
-
-        async function commitEdit(card, key) {
+        async function commitEdit(card, id) {
             const date   = card.querySelector('.edit-date').value;
             const amount = card.querySelector('.edit-amount').value;
             const job    = card.querySelector('.edit-job').value.trim();
             if (!date || !amount || !job) return;
-            setSync('syncing', 'Saving…');
-            await update(ref(db, 'entries/' + key), { date, amount, job });
-            // onValue listener will re-render automatically
+            try {
+                const entries = await loadData();
+                const idx = entries.findIndex(e => e.id === id);
+                if (idx !== -1) entries[idx] = { id, date, amount, job };
+                await saveData(entries);
+                renderEntries(entries);
+            } catch (err) {
+                setSync('error', 'Save failed'); console.error(err);
+            }
         }
 
-        async function deleteEntry(key) {
+        async function deleteEntry(id) {
             if (!confirm('Delete this entry?')) return;
-            setSync('syncing', 'Deleting…');
-            await remove(ref(db, 'entries/' + key));
+            try {
+                const entries = await loadData();
+                await saveData(entries.filter(e => e.id !== id));
+                const updated = await loadData();
+                renderEntries(updated);
+            } catch (err) {
+                setSync('error', 'Delete failed'); console.error(err);
+            }
         }
 
-        // ── Add entry ──────────────────────────────────────────────
+        // ── Add entry ─────────────────────────────────────────────────
         document.getElementById('incomeForm').addEventListener('submit', async e => {
             e.preventDefault();
+            const btn   = document.getElementById('addBtn');
             const entry = {
+                id:     uid(),
                 date:   document.getElementById('dateInput').value,
                 amount: document.getElementById('amountInput').value,
                 job:    document.getElementById('jobInput').value.trim()
             };
-            setSync('syncing', 'Saving…');
-            await push(entriesRef, entry);
-            document.getElementById('amountInput').value = '';
-            document.getElementById('jobInput').value   = '';
-            document.getElementById('dateInput').valueAsDate = new Date();
-            if (navigator.vibrate) navigator.vibrate(40);
+            btn.textContent = 'Saving…'; btn.disabled = true;
+            try {
+                const entries = await loadData();
+                entries.push(entry);
+                await saveData(entries);
+                renderEntries(entries);
+                document.getElementById('amountInput').value = '';
+                document.getElementById('jobInput').value   = '';
+                document.getElementById('dateInput').valueAsDate = new Date();
+                if (navigator.vibrate) navigator.vibrate(40);
+            } catch (err) {
+                setSync('error', 'Save failed'); console.error(err);
+            }
+            btn.textContent = 'Add Entry'; btn.disabled = false;
         });
 
-        // ── Export ─────────────────────────────────────────────────
-        document.getElementById('exportBtn').addEventListener('click', () => {
-            onValue(entriesRef, snapshot => {
-                const entries = Object.values(snapshot.val() || {})
-                    .sort((a, b) => new Date(b.date) - new Date(a.date));
+        // ── Export ─────────────────────────────────────────────────────
+        document.getElementById('exportBtn').addEventListener('click', async () => {
+            try {
+                const entries = await loadData();
                 if (!entries.length) { alert('No entries to export.'); return; }
+                const sorted = entries.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
                 let csv = 'Date,Amount (EUR),Job/Source\n';
-                entries.forEach(e => { csv += `${e.date},${e.amount},"${e.job.replace(/"/g,'""')}"\n`; });
+                sorted.forEach(e => { csv += `${e.date},${e.amount},"${e.job.replace(/"/g,'""')}"\n`; });
                 Object.assign(document.createElement('a'), {
                     href:     URL.createObjectURL(new Blob([csv], { type: 'text/csv' })),
                     download: `income-${new Date().toISOString().slice(0,10)}.csv`
                 }).click();
-            }, { onlyOnce: true });
+            } catch (err) {
+                setSync('error', 'Export failed'); console.error(err);
+            }
         });
     </script>
 </body>
