@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>💰 Income Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        /* ── Lock Screen ── */
+        #lockScreen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 30px;
+        }
+
+        #lockScreen.hidden { display: none; }
+
+        .lock-card {
+            background: white;
+            border-radius: 28px;
+            padding: 36px 28px;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .lock-icon {
+            font-size: 52px;
+            margin-bottom: 12px;
+        }
+
+        .lock-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .lock-subtitle {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 28px;
+        }
+
+        .lock-input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 14px;
+            font-size: 18px;
+            text-align: center;
+            letter-spacing: 4px;
+            margin-bottom: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .lock-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .lock-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 12px;
+        }
+
+        .lock-error {
+            color: #ff4757;
+            font-size: 14px;
+            min-height: 20px;
+            margin-top: 4px;
+        }
+
+        /* ── App ── */
+        #app { display: none; }
+        #app.visible { display: block; }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .lock-app-btn {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            background: rgba(255,255,255,0.25);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.6);
+            color: white;
+            border-radius: 12px;
+            padding: 8px 14px;
+            font-size: 15px;
+            cursor: pointer;
+            z-index: 100;
+        }
+
+        .total {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 20px;
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .total-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .total-amount {
+            font-size: 48px;
+            font-weight: bold;
+        }
+
+        .input-card {
+            background: white;
+            border-radius: 25px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group:last-child { margin-bottom: 0; }
+
+        label {
+            display: block;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+            font-family: inherit;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:active { transform: scale(0.98); }
+
+        .entries { margin-top: 20px; }
+
+        .entry-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .entry-date { color: #999; font-size: 14px; }
+
+        .entry-amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .entry-job { color: #333; font-size: 16px; margin-bottom: 10px; }
+
+        .entry-delete {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .export-btn {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 2px solid white;
+            padding: 15px;
+            border-radius: 12px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Lock Screen -->
+    <div id="lockScreen">
+        <div class="lock-card">
+            <div class="lock-icon" id="lockIcon">🔐</div>
+            <div class="lock-title" id="lockTitle">Welcome back</div>
+            <div class="lock-subtitle" id="lockSubtitle">Enter your password to unlock</div>
+            <input type="password" id="lockInput" class="lock-input" placeholder="••••••••" autocomplete="current-password">
+            <button class="lock-btn" id="lockActionBtn" onclick="handleLockAction()">Unlock</button>
+            <div class="lock-error" id="lockError"></div>
+        </div>
+    </div>
+
+    <!-- App -->
+    <div id="app">
+        <button class="lock-app-btn" onclick="lockApp()">🔒 Lock</button>
+        <div class="container">
+            <div class="header">
+                <h1>💰 Income Tracker</h1>
+            </div>
+
+            <div class="total">
+                <div class="total-label">Total Income</div>
+                <div class="total-amount" id="totalAmount">€0</div>
+            </div>
+
+            <div class="input-card">
+                <form id="incomeForm">
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="dateInput" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Amount (EUR)</label>
+                        <input type="number" id="amountInput" placeholder="0.00" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Job / Source</label>
+                        <textarea id="jobInput" placeholder="e.g., Casino blog article" required></textarea>
+                    </div>
+                    <button type="submit" class="btn">Add Income Entry</button>
+                </form>
+            </div>
+
+            <button class="export-btn" onclick="exportToCSV()">📊 Export to CSV</button>
+
+            <div class="entries" id="entriesList"></div>
+        </div>
+    </div>
+
+    <script>
+        // ── Password helpers (SHA-256 via Web Crypto) ──────────────────────
+        async function sha256(text) {
+            const buf = await crypto.subtle.digest('SHA-256',
+                new TextEncoder().encode(text));
+            return Array.from(new Uint8Array(buf))
+                .map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // ── Lock screen logic ───────────────────────────────────────────────
+        const isFirstTime = !localStorage.getItem('pwHash');
+
+        if (isFirstTime) {
+            document.getElementById('lockIcon').textContent    = '🔑';
+            document.getElementById('lockTitle').textContent   = 'Set a password';
+            document.getElementById('lockSubtitle').textContent = 'Choose a password to protect your income data';
+            document.getElementById('lockActionBtn').textContent = 'Set Password';
+            document.getElementById('lockInput').placeholder   = 'Choose a password';
+        }
+
+        // Allow Enter key on password input
+        document.getElementById('lockInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') handleLockAction();
+        });
+
+        async function handleLockAction() {
+            const val = document.getElementById('lockInput').value.trim();
+            const errEl = document.getElementById('lockError');
+            errEl.textContent = '';
+
+            if (!val) { errEl.textContent = 'Please enter a password.'; return; }
+
+            if (isFirstTime) {
+                if (val.length < 4) { errEl.textContent = 'Password must be at least 4 characters.'; return; }
+                localStorage.setItem('pwHash', await sha256(val));
+                unlockApp();
+            } else {
+                const hash = await sha256(val);
+                if (hash === localStorage.getItem('pwHash')) {
+                    unlockApp();
+                } else {
+                    errEl.textContent = 'Incorrect password. Try again.';
+                    document.getElementById('lockInput').value = '';
+                    document.getElementById('lockInput').focus();
+                }
+            }
+        }
+
+        function unlockApp() {
+            document.getElementById('lockScreen').classList.add('hidden');
+            document.getElementById('app').classList.add('visible');
+            renderEntries();
+            document.getElementById('dateInput').valueAsDate = new Date();
+        }
+
+        function lockApp() {
+            document.getElementById('app').classList.remove('visible');
+            document.getElementById('lockScreen').classList.remove('hidden');
+            document.getElementById('lockInput').value = '';
+            document.getElementById('lockError').textContent = '';
+            // Restore normal unlock UI if not first time
+            if (!isFirstTime) {
+                document.getElementById('lockIcon').textContent    = '🔐';
+                document.getElementById('lockTitle').textContent   = 'Welcome back';
+                document.getElementById('lockSubtitle').textContent = 'Enter your password to unlock';
+                document.getElementById('lockActionBtn').textContent = 'Unlock';
+            }
+        }
+
+        // ── Income tracker logic ────────────────────────────────────────────
+        function loadEntries() {
+            return JSON.parse(localStorage.getItem('incomeEntries') || '[]')
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
+        }
+
+        function saveEntries(entries) {
+            localStorage.setItem('incomeEntries', JSON.stringify(entries));
+        }
+
+        function calculateTotal() {
+            const entries = loadEntries();
+            const total = entries.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+            document.getElementById('totalAmount').textContent = '€' + total.toFixed(2);
+        }
+
+        function renderEntries() {
+            const entries = loadEntries();
+            const container = document.getElementById('entriesList');
+
+            if (entries.length === 0) {
+                container.innerHTML = '<div class="empty-state">No income entries yet. Add your first entry above! 📝</div>';
+                calculateTotal();
+                return;
+            }
+
+            container.innerHTML = entries.map((entry, index) => `
+                <div class="entry-card">
+                    <div class="entry-header">
+                        <span class="entry-date">${formatDate(entry.date)}</span>
+                        <span class="entry-amount">€${parseFloat(entry.amount).toFixed(2)}</span>
+                    </div>
+                    <div class="entry-job">${entry.job}</div>
+                    <button class="entry-delete" onclick="deleteEntry(${index})">Delete</button>
+                </div>
+            `).join('');
+
+            calculateTotal();
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        document.getElementById('incomeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const entry = {
+                date:   document.getElementById('dateInput').value,
+                amount: document.getElementById('amountInput').value,
+                job:    document.getElementById('jobInput').value
+            };
+            const entries = loadEntries();
+            entries.push(entry);
+            saveEntries(entries);
+            document.getElementById('amountInput').value = '';
+            document.getElementById('jobInput').value = '';
+            document.getElementById('dateInput').valueAsDate = new Date();
+            renderEntries();
+            if (navigator.vibrate) navigator.vibrate(50);
+        });
+
+        function deleteEntry(index) {
+            if (confirm('Delete this entry?')) {
+                const entries = loadEntries();
+                entries.splice(index, 1);
+                saveEntries(entries);
+                renderEntries();
+            }
+        }
+
+        function exportToCSV() {
+            const entries = loadEntries();
+            if (entries.length === 0) { alert('No entries to export!'); return; }
+            let csv = 'Date,Amount (EUR),Job/Source\n';
+            entries.forEach(e => { csv += `${e.date},${e.amount},"${e.job}"\n`; });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `income-tracker-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+    </script>
+</body>
+</html>
