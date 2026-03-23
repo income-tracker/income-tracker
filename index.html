@@ -284,7 +284,68 @@
         }
         .received-form-wrap.open { display: block; padding-top: 20px; }
 
-        /* ── Received badge on entry cards ───────────────────────── */
+        /* ── New Entry collapsible (same pattern as received) ───────── */
+        .new-entry-banner {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 18px; margin-bottom: 16px; box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .new-entry-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 24px; cursor: pointer; user-select: none;
+        }
+        .new-entry-header-label {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 13px; font-weight: 700; letter-spacing: .08em;
+            text-transform: uppercase; color: var(--ink-3);
+        }
+        .new-entry-form-wrap {
+            display: none; padding: 0 24px 24px; border-top: 1px solid var(--border);
+        }
+        .new-entry-form-wrap.open { display: block; padding-top: 20px; }
+
+        /* ── Expenses banner ──────────────────────────────────────── */
+        .expenses-banner {
+            background: #fff8f8; border: 1px solid #fecaca;
+            border-radius: 18px; margin-bottom: 16px; box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .expenses-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 24px; cursor: pointer; user-select: none;
+        }
+        .expenses-header-left { display: flex; flex-direction: column; gap: 3px; }
+        .expenses-header-label {
+            font-size: 12px; font-weight: 600; letter-spacing: .1em;
+            text-transform: uppercase; color: #f87171;
+        }
+        .expenses-total {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 26px; font-weight: 700; color: #ef4444;
+        }
+        .expenses-toggle {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: #fee2e2; border: 1.5px solid #fecaca;
+            font-size: 18px; color: #ef4444;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background .15s;
+            flex-shrink: 0;
+        }
+        .expenses-toggle:hover { background: #fecaca; }
+        .expenses-form-wrap {
+            display: none; padding: 0 24px 20px; border-top: 1px solid #fecaca;
+        }
+        .expenses-form-wrap.open { display: block; padding-top: 20px; }
+        .btn-primary-red {
+            width: 100%; padding: 14px; background: #ef4444; color: white;
+            border: none; border-radius: 10px; font-family: 'Inter', sans-serif;
+            font-size: 15px; font-weight: 600; cursor: pointer;
+            transition: opacity .15s; margin-top: 4px;
+        }
+        .btn-primary-red:active { opacity: .8; }
+        .btn-primary-red:disabled { opacity: .5; cursor: not-allowed; }
+
+        /* ── Entry badges ─────────────────────────────────────────── */
         .entry-badge {
             display: inline-block; padding: 2px 8px;
             background: #f1f5f9; border: 1px solid var(--border-2);
@@ -292,7 +353,9 @@
             letter-spacing: .05em; text-transform: uppercase;
             color: var(--ink-3); margin-bottom: 6px;
         }
+        .entry-badge.expense { background: #fff0f0; border-color: #fecaca; color: #ef4444; }
         .entry-card.received .entry-amount { color: var(--ink-3); }
+        .entry-card.expense  .entry-amount { color: #ef4444; }
     </style>
 </head>
 <body>
@@ -347,23 +410,31 @@
                 <div class="total-amount" id="totalAmount">€0.00</div>
             </div>
 
-            <div class="card">
-                <div class="card-title">New Entry</div>
-                <form id="incomeForm">
-                    <div class="form-group">
-                        <label class="form-label" for="dateInput">Date</label>
-                        <input type="date" id="dateInput" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="amountInput">Amount (EUR)</label>
-                        <input type="number" id="amountInput" class="form-input" placeholder="0.00" step="0.01" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="jobInput">Job / Source</label>
-                        <textarea id="jobInput" class="form-input" placeholder="e.g., Casino blog article" required></textarea>
-                    </div>
-                    <button type="submit" class="btn-primary" id="addBtn">Add Entry</button>
-                </form>
+            <!-- New Income Entry (collapsible) -->
+            <div class="new-entry-banner">
+                <div class="new-entry-header" id="newEntryHeader">
+                    <span class="new-entry-header-label">New Income Entry</span>
+                    <button class="received-toggle" id="newEntryToggle" title="Add income entry">+</button>
+                </div>
+                <div class="new-entry-form-wrap" id="newEntryFormWrap">
+                    <form id="incomeForm">
+                        <div class="entry-edit-row" style="margin-bottom:12px">
+                            <div>
+                                <label class="form-label" for="dateInput">Date</label>
+                                <input type="date" id="dateInput" class="form-input" required>
+                            </div>
+                            <div>
+                                <label class="form-label" for="amountInput">Amount (EUR)</label>
+                                <input type="number" id="amountInput" class="form-input" placeholder="0.00" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        <div style="margin-bottom:12px">
+                            <label class="form-label" for="jobInput">Job / Source</label>
+                            <textarea id="jobInput" class="form-input" placeholder="e.g., Casino blog article" required></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary" id="addBtn">Add Entry</button>
+                    </form>
+                </div>
             </div>
 
             <!-- Received -->
@@ -392,6 +463,36 @@
                             <textarea id="rNotesInput" class="form-input" placeholder="e.g., Payment from client X" required></textarea>
                         </div>
                         <button type="submit" class="btn-primary" id="addReceivedBtn">Add Received Entry</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Expenses -->
+            <div class="expenses-banner">
+                <div class="expenses-header" id="expensesHeader">
+                    <div class="expenses-header-left">
+                        <span class="expenses-header-label">Total Expenses</span>
+                        <span class="expenses-total" id="expensesAmount">€0.00</span>
+                    </div>
+                    <button class="expenses-toggle" id="expensesToggle" title="Add expense">+</button>
+                </div>
+                <div class="expenses-form-wrap" id="expensesFormWrap">
+                    <form id="expensesForm">
+                        <div class="entry-edit-row" style="margin-bottom:12px">
+                            <div>
+                                <label class="form-label" for="eDateInput">Date</label>
+                                <input type="date" id="eDateInput" class="form-input" required>
+                            </div>
+                            <div>
+                                <label class="form-label" for="eAmountInput">Amount (EUR)</label>
+                                <input type="number" id="eAmountInput" class="form-input" placeholder="0.00" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        <div style="margin-bottom:12px">
+                            <label class="form-label" for="eNotesInput">Description</label>
+                            <textarea id="eNotesInput" class="form-input" placeholder="e.g., Software subscription" required></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary-red" id="addExpenseBtn">Add Expense</button>
                     </form>
                 </div>
             </div>
@@ -613,12 +714,15 @@
 
         // ── Render ────────────────────────────────────────────────────
         function renderEntries(entries) {
-            const income   = entries.filter(e => e.type !== 'received');
+            const income   = entries.filter(e => !e.type || e.type === 'income');
             const received = entries.filter(e => e.type === 'received');
-            const total    = income.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+            const expenses = entries.filter(e => e.type === 'expense');
+            const incTotal = income.reduce((s, e)   => s + parseFloat(e.amount || 0), 0);
             const recTotal = received.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
-            document.getElementById('totalAmount').textContent   = '€' + total.toFixed(2);
+            const expTotal = expenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+            document.getElementById('totalAmount').textContent    = '€' + (incTotal - expTotal).toFixed(2);
             document.getElementById('receivedAmount').textContent = '€' + recTotal.toFixed(2);
+            document.getElementById('expensesAmount').textContent = '€' + expTotal.toFixed(2);
 
             const list = document.getElementById('entriesList');
             if (!entries.length) {
@@ -629,11 +733,21 @@
                 .slice().sort((a, b) => new Date(b.date) - new Date(a.date))
                 .map(e => {
                     const isReceived = e.type === 'received';
-                    const label      = isReceived ? esc(e.notes || e.job || '') : esc(e.job || '');
+                    const isExpense  = e.type === 'expense';
+                    const label = (isReceived || isExpense)
+                        ? esc(e.notes || e.job || '')
+                        : esc(e.job || '');
+                    const cardClass = isReceived ? ' received' : isExpense ? ' expense' : '';
+                    const badge     = isReceived
+                        ? '<span class="entry-badge">Received</span>'
+                        : isExpense
+                        ? '<span class="entry-badge expense">Expense</span>'
+                        : '';
+                    const type = isReceived ? 'received' : isExpense ? 'expense' : 'income';
                     return `
-                    <div class="entry-card${isReceived ? ' received' : ''}" data-id="${esc(e.id)}" data-date="${esc(e.date)}" data-type="${isReceived ? 'received' : 'income'}">
+                    <div class="entry-card${cardClass}" data-id="${esc(e.id)}" data-date="${esc(e.date)}" data-type="${type}">
                         <div class="entry-view">
-                            ${isReceived ? '<span class="entry-badge">Received</span>' : ''}
+                            ${badge}
                             <div class="entry-top">
                                 <span class="entry-job">${label}</span>
                                 <span class="entry-amount">€${parseFloat(e.amount).toFixed(2)}</span>
@@ -667,6 +781,7 @@
 
         function openEdit(card) {
             const isReceived = card.dataset.type === 'received';
+            const isExpense  = card.dataset.type === 'expense';
             const label  = card.querySelector('.entry-job').textContent;
             const amount = card.querySelector('.entry-amount').textContent.replace('€','').trim();
             const date   = card.dataset.date;
@@ -683,7 +798,7 @@
                         </div>
                     </div>
                     <div>
-                        <label class="form-label">${isReceived ? 'Notes' : 'Job / Source'}</label>
+                        <label class="form-label">${isReceived ? 'Notes' : isExpense ? 'Description' : 'Job / Source'}</label>
                         <textarea class="form-input edit-label">${esc(label)}</textarea>
                     </div>
                     <div class="entry-edit-actions">
@@ -694,17 +809,17 @@
         }
 
         async function commitEdit(card, id) {
-            const date       = card.querySelector('.edit-date').value;
-            const amount     = card.querySelector('.edit-amount').value;
-            const labelVal   = card.querySelector('.edit-label').value.trim();
-            const isReceived = card.dataset.type === 'received';
+            const date     = card.querySelector('.edit-date').value;
+            const amount   = card.querySelector('.edit-amount').value;
+            const labelVal = card.querySelector('.edit-label').value.trim();
+            const type     = card.dataset.type;
             if (!date || !amount || !labelVal) return;
             try {
                 const entries = await loadData();
                 const idx = entries.findIndex(e => e.id === id);
                 if (idx !== -1) {
-                    entries[idx] = isReceived
-                        ? { id, type: 'received', date, amount, notes: labelVal }
+                    entries[idx] = (type === 'received' || type === 'expense')
+                        ? { id, type, date, amount, notes: labelVal }
                         : { id, date, amount, job: labelVal };
                 }
                 await saveData(entries);
@@ -752,6 +867,15 @@
             btn.textContent = 'Add Entry'; btn.disabled = false;
         });
 
+        // ── New Entry toggle ──────────────────────────────────────────
+        document.getElementById('newEntryHeader').addEventListener('click', () => {
+            const wrap = document.getElementById('newEntryFormWrap');
+            const btn  = document.getElementById('newEntryToggle');
+            const open = wrap.classList.toggle('open');
+            btn.textContent = open ? '×' : '+';
+            if (open) document.getElementById('dateInput').valueAsDate = new Date();
+        });
+
         // ── Received toggle ───────────────────────────────────────────
         document.getElementById('receivedHeader').addEventListener('click', () => {
             const wrap = document.getElementById('receivedFormWrap');
@@ -759,6 +883,44 @@
             const open = wrap.classList.toggle('open');
             btn.textContent = open ? '×' : '+';
             if (open) document.getElementById('rDateInput').valueAsDate = new Date();
+        });
+
+        // ── Expenses toggle ───────────────────────────────────────────
+        document.getElementById('expensesHeader').addEventListener('click', () => {
+            const wrap = document.getElementById('expensesFormWrap');
+            const btn  = document.getElementById('expensesToggle');
+            const open = wrap.classList.toggle('open');
+            btn.textContent = open ? '×' : '+';
+            if (open) document.getElementById('eDateInput').valueAsDate = new Date();
+        });
+
+        // ── Add expense ───────────────────────────────────────────────
+        document.getElementById('expensesForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const btn   = document.getElementById('addExpenseBtn');
+            const entry = {
+                id:     uid(),
+                type:   'expense',
+                date:   document.getElementById('eDateInput').value,
+                amount: document.getElementById('eAmountInput').value,
+                notes:  document.getElementById('eNotesInput').value.trim()
+            };
+            btn.textContent = 'Saving…'; btn.disabled = true;
+            try {
+                const entries = await loadData();
+                entries.push(entry);
+                await saveData(entries);
+                renderEntries(entries);
+                document.getElementById('eAmountInput').value = '';
+                document.getElementById('eNotesInput').value  = '';
+                document.getElementById('eDateInput').valueAsDate = new Date();
+                document.getElementById('expensesFormWrap').classList.remove('open');
+                document.getElementById('expensesToggle').textContent = '+';
+                if (navigator.vibrate) navigator.vibrate(40);
+            } catch (err) {
+                setSync('error', err.message || 'Save failed'); console.error(err);
+            }
+            btn.textContent = 'Add Expense'; btn.disabled = false;
         });
 
         // ── Add received entry ────────────────────────────────────────
