@@ -6,6 +6,9 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.svg">
     <title>Income Tracker</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -246,6 +249,29 @@
 
         .empty-state { text-align: center; padding: 40px 20px; color: var(--ink-3); font-size: 14px; }
         .empty-icon  { font-size: 32px; margin-bottom: 10px; }
+
+        /* ── Period filter ────────────────────────────────────────── */
+        .filter-row {
+            display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+        }
+        .filter-pill {
+            padding: 6px 16px; border-radius: 20px;
+            font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+            cursor: pointer; border: 1.5px solid var(--border-2);
+            background: transparent; color: var(--ink-2);
+            transition: background .15s, color .15s, border-color .15s;
+        }
+        .filter-pill:hover { border-color: var(--ink); color: var(--ink); }
+        .filter-pill.active {
+            background: var(--ink); color: white; border-color: var(--ink);
+        }
+
+        /* ── Export row ───────────────────────────────────────────── */
+        .export-row {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;
+        }
+        .export-row .btn-outline { margin-bottom: 0; }
+
         .section-label {
             font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700;
             letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px;
@@ -497,9 +523,17 @@
                 </div>
             </div>
 
-            <button class="btn-outline" id="exportBtn">Export to CSV</button>
+            <div class="export-row">
+                <button class="btn-outline" id="exportBtn">Export CSV</button>
+                <button class="btn-outline" id="exportJsonBtn">Export JSON</button>
+            </div>
 
-            <div class="section-label">Entries</div>
+            <div class="filter-row">
+                <button class="filter-pill active" data-filter="all">All time</button>
+                <button class="filter-pill" data-filter="month">This month</button>
+                <button class="filter-pill" data-filter="year">This year</button>
+            </div>
+            <div class="section-label" id="entriesLabel">Entries</div>
             <div class="entry-list" id="entriesList"></div>
         </div>
     </div>
@@ -712,11 +746,51 @@
             setSync('', '');
         });
 
+        // ── Period filter ─────────────────────────────────────────────
+        let currentFilter = 'all';
+
+        function applyFilter(entries) {
+            if (currentFilter === 'all') return entries;
+            const now = new Date();
+            return entries.filter(e => {
+                const d = new Date(e.date + 'T00:00:00'); // avoid timezone shift
+                if (currentFilter === 'month')
+                    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+                if (currentFilter === 'year')
+                    return d.getFullYear() === now.getFullYear();
+                return true;
+            });
+        }
+
+        function filterLabel() {
+            const now = new Date();
+            if (currentFilter === 'month')
+                return now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            if (currentFilter === 'year')
+                return String(now.getFullYear());
+            return 'Entries';
+        }
+
+        document.querySelector('.filter-row').addEventListener('click', e => {
+            const pill = e.target.closest('.filter-pill');
+            if (!pill) return;
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            currentFilter = pill.dataset.filter;
+            document.getElementById('entriesLabel').textContent = filterLabel();
+            // re-render with current data (no network call needed)
+            if (_lastEntries) renderEntries(_lastEntries);
+        });
+
+        let _lastEntries = null; // cache for filter re-renders without extra API calls
+
         // ── Render ────────────────────────────────────────────────────
         function renderEntries(entries) {
-            const income   = entries.filter(e => !e.type || e.type === 'income');
-            const received = entries.filter(e => e.type === 'received');
-            const expenses = entries.filter(e => e.type === 'expense');
+            _lastEntries = entries; // cache
+            const visible = applyFilter(entries);
+            const income   = visible.filter(e => !e.type || e.type === 'income');
+            const received = visible.filter(e => e.type === 'received');
+            const expenses = visible.filter(e => e.type === 'expense');
             const incTotal = income.reduce((s, e)   => s + parseFloat(e.amount || 0), 0);
             const recTotal = received.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
             const expTotal = expenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
@@ -725,11 +799,11 @@
             document.getElementById('expensesAmount').textContent = '€' + expTotal.toFixed(2);
 
             const list = document.getElementById('entriesList');
-            if (!entries.length) {
-                list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div>No entries yet. Add your first one above.</div>`;
+            if (!visible.length) {
+                list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div>${currentFilter === 'all' ? 'No entries yet. Add your first one above.' : 'No entries for this period.'}</div>`;
                 return;
             }
-            list.innerHTML = entries
+            list.innerHTML = visible
                 .slice().sort((a, b) => new Date(b.date) - new Date(a.date))
                 .map(e => {
                     const isReceived = e.type === 'received';
@@ -953,17 +1027,37 @@
             btn.textContent = 'Add Received Entry'; btn.disabled = false;
         });
 
-        // ── Export ─────────────────────────────────────────────────────
+        // ── Export CSV ─────────────────────────────────────────────────
         document.getElementById('exportBtn').addEventListener('click', async () => {
             try {
                 const entries = await loadData();
                 if (!entries.length) { alert('No entries to export.'); return; }
                 const sorted = entries.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
-                let csv = 'Date,Amount (EUR),Job/Source\n';
-                sorted.forEach(e => { csv += `${e.date},${e.amount},"${e.job.replace(/"/g,'""')}"\n`; });
+                let csv = 'Date,Type,Amount (EUR),Description\n';
+                sorted.forEach(e => {
+                    const type  = e.type || 'income';
+                    const label = (e.job || e.notes || '').replace(/"/g, '""');
+                    csv += `${e.date},${type},${e.amount},"${label}"\n`;
+                });
                 Object.assign(document.createElement('a'), {
                     href:     URL.createObjectURL(new Blob([csv], { type: 'text/csv' })),
                     download: `income-${new Date().toISOString().slice(0,10)}.csv`
+                }).click();
+            } catch (err) {
+                setSync('error', 'Export failed'); console.error(err);
+            }
+        });
+
+        // ── Export JSON ────────────────────────────────────────────────
+        document.getElementById('exportJsonBtn').addEventListener('click', async () => {
+            try {
+                const entries = await loadData();
+                Object.assign(document.createElement('a'), {
+                    href:     URL.createObjectURL(new Blob(
+                        [JSON.stringify({ entries }, null, 2)],
+                        { type: 'application/json' }
+                    )),
+                    download: `income-backup-${new Date().toISOString().slice(0,10)}.json`
                 }).click();
             } catch (err) {
                 setSync('error', 'Export failed'); console.error(err);

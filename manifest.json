@@ -1,0 +1,19 @@
+{
+  "name": "Income Tracker",
+  "short_name": "Income",
+  "description": "Personal income, expenses and payments tracker",
+  "start_url": "/income-tracker/",
+  "scope": "/income-tracker/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
