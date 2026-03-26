@@ -379,9 +379,48 @@
             letter-spacing: .05em; text-transform: uppercase;
             color: var(--ink-3); margin-bottom: 6px;
         }
-        .entry-badge.expense { background: #fff0f0; border-color: #fecaca; color: #ef4444; }
-        .entry-card.received .entry-amount { color: var(--ink-3); }
-        .entry-card.expense  .entry-amount { color: #ef4444; }
+        .entry-badge.expense    { background: #fff0f0; border-color: #fecaca; color: #ef4444; }
+        .entry-badge.dice-floor { background: #f5f3ff; border-color: #ddd6fe; color: #7c3aed; }
+        .entry-card.received .entry-amount        { color: var(--ink-3); }
+        .entry-card.expense  .entry-amount        { color: #ef4444; }
+        .entry-card.df-expense .entry-amount      { color: #ef4444; }
+
+        /* ── Dice Floor banner ────────────────────────────────────── */
+        .df-banner {
+            background: #f5f3ff; border: 1px solid #ddd6fe;
+            border-radius: 18px; margin-bottom: 16px; box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .df-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 24px; cursor: default; gap: 12px;
+        }
+        .df-header-left { display: flex; flex-direction: column; gap: 3px; }
+        .df-header-label {
+            font-size: 12px; font-weight: 600; letter-spacing: .1em;
+            text-transform: uppercase; color: #7c3aed;
+        }
+        .df-total {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 26px; font-weight: 700; color: #6d28d9;
+        }
+        .df-toggles { display: flex; gap: 8px; flex-shrink: 0; }
+        .df-toggle-btn {
+            height: 32px; padding: 0 12px; border-radius: 8px;
+            font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
+            cursor: pointer; transition: opacity .15s; border: none;
+        }
+        .df-toggle-btn.income  { background: #6d28d9; color: white; }
+        .df-toggle-btn.expense { background: #ef4444; color: white; }
+        .df-toggle-btn:hover   { opacity: .85; }
+        .df-form-wrap {
+            display: none; padding: 0 24px 20px; border-top: 1px solid #ddd6fe;
+        }
+        .df-form-wrap.open { display: block; padding-top: 20px; }
+        .df-form-label {
+            font-size: 11px; font-weight: 700; letter-spacing: .08em;
+            text-transform: uppercase; color: #7c3aed; margin-bottom: 14px;
+        }
     </style>
 </head>
 <body>
@@ -519,6 +558,62 @@
                             <textarea id="eNotesInput" class="form-input" placeholder="e.g., Software subscription" required></textarea>
                         </div>
                         <button type="submit" class="btn-primary-red" id="addExpenseBtn">Add Expense</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Dice Floor -->
+            <div class="df-banner">
+                <div class="df-header">
+                    <div class="df-header-left">
+                        <span class="df-header-label">Dice Floor</span>
+                        <span class="df-total" id="dfTotal">€0.00</span>
+                    </div>
+                    <div class="df-toggles">
+                        <button class="df-toggle-btn income"  id="dfIncomeToggle">+ Income</button>
+                        <button class="df-toggle-btn expense" id="dfExpenseToggle">+ Expense</button>
+                    </div>
+                </div>
+                <!-- Dice Floor income form -->
+                <div class="df-form-wrap" id="dfIncomeWrap">
+                    <form id="dfIncomeForm">
+                        <div class="df-form-label">New Dice Floor Income</div>
+                        <div class="entry-edit-row" style="margin-bottom:12px">
+                            <div>
+                                <label class="form-label" for="dfIDateInput">Date</label>
+                                <input type="date" id="dfIDateInput" class="form-input" required>
+                            </div>
+                            <div>
+                                <label class="form-label" for="dfIAmountInput">Amount (EUR)</label>
+                                <input type="number" id="dfIAmountInput" class="form-input" placeholder="0.00" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        <div style="margin-bottom:12px">
+                            <label class="form-label" for="dfINotesInput">Notes</label>
+                            <textarea id="dfINotesInput" class="form-input" placeholder="e.g., Session winnings" required></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary" id="addDfIncomeBtn">Add Dice Floor Income</button>
+                    </form>
+                </div>
+                <!-- Dice Floor expense form -->
+                <div class="df-form-wrap" id="dfExpenseWrap">
+                    <form id="dfExpenseForm">
+                        <div class="df-form-label">New Dice Floor Expense</div>
+                        <div class="entry-edit-row" style="margin-bottom:12px">
+                            <div>
+                                <label class="form-label" for="dfEDateInput">Date</label>
+                                <input type="date" id="dfEDateInput" class="form-input" required>
+                            </div>
+                            <div>
+                                <label class="form-label" for="dfEAmountInput">Amount (EUR)</label>
+                                <input type="number" id="dfEAmountInput" class="form-input" placeholder="0.00" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        <div style="margin-bottom:12px">
+                            <label class="form-label" for="dfENotesInput">Description</label>
+                            <textarea id="dfENotesInput" class="form-input" placeholder="e.g., Table buy-in" required></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary-red" id="addDfExpenseBtn">Add Dice Floor Expense</button>
                     </form>
                 </div>
             </div>
@@ -788,15 +883,22 @@
         function renderEntries(entries) {
             _lastEntries = entries; // cache
             const visible = applyFilter(entries);
-            const income   = visible.filter(e => !e.type || e.type === 'income');
-            const received = visible.filter(e => e.type === 'received');
-            const expenses = visible.filter(e => e.type === 'expense');
-            const incTotal = income.reduce((s, e)   => s + parseFloat(e.amount || 0), 0);
-            const recTotal = received.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
-            const expTotal = expenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
-            document.getElementById('totalAmount').textContent    = '€' + (incTotal - expTotal).toFixed(2);
+            const isDF      = e => e.category === 'dice-floor';
+            const genIncome = visible.filter(e => (!e.type || e.type === 'income') && !isDF(e));
+            const genExp    = visible.filter(e => e.type === 'expense' && !isDF(e));
+            const received  = visible.filter(e => e.type === 'received');
+            const dfIncome  = visible.filter(e => (!e.type || e.type === 'income') && isDF(e));
+            const dfExp     = visible.filter(e => e.type === 'expense' && isDF(e));
+            const genTotal  = genIncome.reduce((s,e) => s + parseFloat(e.amount||0), 0)
+                            - genExp.reduce((s,e)    => s + parseFloat(e.amount||0), 0);
+            const recTotal  = received.reduce((s,e)  => s + parseFloat(e.amount||0), 0);
+            const expTotal  = genExp.reduce((s,e)    => s + parseFloat(e.amount||0), 0);
+            const dfTotal   = dfIncome.reduce((s,e)  => s + parseFloat(e.amount||0), 0)
+                            - dfExp.reduce((s,e)     => s + parseFloat(e.amount||0), 0);
+            document.getElementById('totalAmount').textContent    = '€' + genTotal.toFixed(2);
             document.getElementById('receivedAmount').textContent = '€' + recTotal.toFixed(2);
             document.getElementById('expensesAmount').textContent = '€' + expTotal.toFixed(2);
+            document.getElementById('dfTotal').textContent        = '€' + dfTotal.toFixed(2);
 
             const list = document.getElementById('entriesList');
             if (!visible.length) {
@@ -806,22 +908,27 @@
             list.innerHTML = visible
                 .slice().sort((a, b) => new Date(b.date) - new Date(a.date))
                 .map(e => {
-                    const isReceived = e.type === 'received';
-                    const isExpense  = e.type === 'expense';
-                    const label = (isReceived || isExpense)
+                    const isDiceFloor = e.category === 'dice-floor';
+                    const isReceived  = e.type === 'received';
+                    const isExpense   = e.type === 'expense';
+                    const label = (isReceived || isExpense || isDiceFloor)
                         ? esc(e.notes || e.job || '')
                         : esc(e.job || '');
-                    const cardClass = isReceived ? ' received' : isExpense ? ' expense' : '';
-                    const badge     = isReceived
-                        ? '<span class="entry-badge">Received</span>'
-                        : isExpense
-                        ? '<span class="entry-badge expense">Expense</span>'
-                        : '';
-                    const type = isReceived ? 'received' : isExpense ? 'expense' : 'income';
+                    const cardClass = isDiceFloor && isExpense ? ' df-expense'
+                                    : isReceived ? ' received'
+                                    : isExpense  ? ' expense' : '';
+                    const badges = [
+                        isDiceFloor ? '<span class="entry-badge dice-floor">Dice Floor</span>' : '',
+                        isReceived  ? '<span class="entry-badge">Received</span>' : '',
+                        !isDiceFloor && isExpense ? '<span class="entry-badge expense">Expense</span>' : '',
+                        isDiceFloor && isExpense  ? '<span class="entry-badge expense">Expense</span>' : ''
+                    ].join('');
+                    const type     = isReceived ? 'received' : isExpense ? 'expense' : 'income';
+                    const category = isDiceFloor ? 'dice-floor' : 'general';
                     return `
-                    <div class="entry-card${cardClass}" data-id="${esc(e.id)}" data-date="${esc(e.date)}" data-type="${type}">
+                    <div class="entry-card${cardClass}" data-id="${esc(e.id)}" data-date="${esc(e.date)}" data-type="${type}" data-category="${category}">
                         <div class="entry-view">
-                            ${badge}
+                            ${badges}
                             <div class="entry-top">
                                 <span class="entry-job">${label}</span>
                                 <span class="entry-amount">€${parseFloat(e.amount).toFixed(2)}</span>
@@ -872,7 +979,7 @@
                         </div>
                     </div>
                     <div>
-                        <label class="form-label">${isReceived ? 'Notes' : isExpense ? 'Description' : 'Job / Source'}</label>
+                        <label class="form-label">${isReceived ? 'Notes' : isExpense ? 'Description' : card.dataset.category === 'dice-floor' ? 'Description' : 'Job / Source'}</label>
                         <textarea class="form-input edit-label">${esc(label)}</textarea>
                     </div>
                     <div class="entry-edit-actions">
@@ -887,14 +994,17 @@
             const amount   = card.querySelector('.edit-amount').value;
             const labelVal = card.querySelector('.edit-label').value.trim();
             const type     = card.dataset.type;
+            const category = card.dataset.category || undefined;
             if (!date || !amount || !labelVal) return;
             try {
                 const entries = await loadData();
                 const idx = entries.findIndex(e => e.id === id);
                 if (idx !== -1) {
-                    entries[idx] = (type === 'received' || type === 'expense')
+                    const base = (type === 'received' || type === 'expense')
                         ? { id, type, date, amount, notes: labelVal }
                         : { id, date, amount, job: labelVal };
+                    if (category) base.category = category;
+                    entries[idx] = base;
                 }
                 await saveData(entries);
                 renderEntries(entries);
@@ -1025,6 +1135,80 @@
                 setSync('error', err.message || 'Save failed'); console.error(err);
             }
             btn.textContent = 'Add Received Entry'; btn.disabled = false;
+        });
+
+        // ── Dice Floor toggles ────────────────────────────────────────
+        document.getElementById('dfIncomeToggle').addEventListener('click', () => {
+            const wrap = document.getElementById('dfIncomeWrap');
+            const open = wrap.classList.toggle('open');
+            document.getElementById('dfIncomeToggle').textContent = open ? '× Income' : '+ Income';
+            if (open) document.getElementById('dfIDateInput').valueAsDate = new Date();
+        });
+
+        document.getElementById('dfExpenseToggle').addEventListener('click', () => {
+            const wrap = document.getElementById('dfExpenseWrap');
+            const open = wrap.classList.toggle('open');
+            document.getElementById('dfExpenseToggle').textContent = open ? '× Expense' : '+ Expense';
+            if (open) document.getElementById('dfEDateInput').valueAsDate = new Date();
+        });
+
+        // ── Add Dice Floor income ─────────────────────────────────────
+        document.getElementById('dfIncomeForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const btn   = document.getElementById('addDfIncomeBtn');
+            const entry = {
+                id:       uid(),
+                category: 'dice-floor',
+                date:     document.getElementById('dfIDateInput').value,
+                amount:   document.getElementById('dfIAmountInput').value,
+                job:      document.getElementById('dfINotesInput').value.trim()
+            };
+            btn.textContent = 'Saving…'; btn.disabled = true;
+            try {
+                const entries = await loadData();
+                entries.push(entry);
+                await saveData(entries);
+                renderEntries(entries);
+                document.getElementById('dfIAmountInput').value = '';
+                document.getElementById('dfINotesInput').value  = '';
+                document.getElementById('dfIDateInput').valueAsDate = new Date();
+                document.getElementById('dfIncomeWrap').classList.remove('open');
+                document.getElementById('dfIncomeToggle').textContent = '+ Income';
+                if (navigator.vibrate) navigator.vibrate(40);
+            } catch (err) {
+                setSync('error', err.message || 'Save failed'); console.error(err);
+            }
+            btn.textContent = 'Add Dice Floor Income'; btn.disabled = false;
+        });
+
+        // ── Add Dice Floor expense ────────────────────────────────────
+        document.getElementById('dfExpenseForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const btn   = document.getElementById('addDfExpenseBtn');
+            const entry = {
+                id:       uid(),
+                type:     'expense',
+                category: 'dice-floor',
+                date:     document.getElementById('dfEDateInput').value,
+                amount:   document.getElementById('dfEAmountInput').value,
+                notes:    document.getElementById('dfENotesInput').value.trim()
+            };
+            btn.textContent = 'Saving…'; btn.disabled = true;
+            try {
+                const entries = await loadData();
+                entries.push(entry);
+                await saveData(entries);
+                renderEntries(entries);
+                document.getElementById('dfEAmountInput').value = '';
+                document.getElementById('dfENotesInput').value  = '';
+                document.getElementById('dfEDateInput').valueAsDate = new Date();
+                document.getElementById('dfExpenseWrap').classList.remove('open');
+                document.getElementById('dfExpenseToggle').textContent = '+ Expense';
+                if (navigator.vibrate) navigator.vibrate(40);
+            } catch (err) {
+                setSync('error', err.message || 'Save failed'); console.error(err);
+            }
+            btn.textContent = 'Add Dice Floor Expense'; btn.disabled = false;
         });
 
         // ── Export CSV ─────────────────────────────────────────────────
